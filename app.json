@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "buddy-up",
+    "name": "Buddy Up",
     "slug": "buddy-up",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,10 +9,21 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0369A1"
     },
+    "scheme": ["buddyup", "com.buddyup.app"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.buddyup.app",
+      "usesAppleSignIn": true,
+      "config": {
+        "googleMapsApiKey": "AIzaSyDcaDaB4hdR4SGGGotR7l8saIR8Zp_zPY0"
+      },
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Buddy Up needs your location to show nearby divers and instructors.",
+        "NSCameraUsageDescription": "Buddy Up needs camera access for profile photos and certifications.",
+        "NSPhotoLibraryUsageDescription": "Buddy Up needs photo library access to upload profile photos and certifications."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,10 +32,50 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "package": "com.buddyup.app",
+      "predictiveBackGestureEnabled": false,
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDcaDaB4hdR4SGGGotR7l8saIR8Zp_zPY0"
+        }
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "sivmbewtkqlvcbilgyjw.supabase.co",
+              "pathPrefix": "/auth/v1/callback"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-location",
+      "expo-asset",
+      "expo-web-browser",
+      "expo-apple-authentication",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Buddy Up to access your photos for profile pictures and certifications.",
+          "cameraPermission": "Allow Buddy Up to access your camera."
+        }
+      ]
+    ]
   }
 }
