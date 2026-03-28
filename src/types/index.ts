@@ -156,6 +156,9 @@ export type RootStackParamList = {
   // Dive request routes
   DiveRequestForm: { buddyId: string; buddyName: string };
   DiveRequestDetail: { requestId: string };
+  // Password reset
+  ForgotPassword: undefined;
+  ResetPassword: { accessToken: string; refreshToken: string };
 };
 
 export type FindMode = 'buddy' | 'instructor';
@@ -167,7 +170,7 @@ export type AdminTabParamList = {
 
 export type BeginnerTabParamList = {
   Find: { defaultMode: FindMode; showToggle: boolean };
-  Bookings: undefined;
+  Schedule: undefined;
   Messages: undefined;
   Profile: undefined;
 };
@@ -175,8 +178,7 @@ export type BeginnerTabParamList = {
 export type CertifiedTabParamList = {
   Home: undefined;
   Find: { defaultMode: FindMode; showToggle: boolean };
-  Requests: undefined;
-  Bookings: undefined;
+  Schedule: undefined;
   Messages: undefined;
   Profile: undefined;
 };

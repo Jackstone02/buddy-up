@@ -17,6 +17,7 @@ import { useAuthStore } from '../../store/authStore';
 import UserAvatar from '../../components/UserAvatar';
 import AppModal from '../../components/AppModal';
 import { useAppModal } from '../../hooks/useAppModal';
+import { isDemoMode, DEMO_DIVE_REQUESTS } from '../../lib/mockData'; // DEMO MODE
 
 type Props = NativeStackScreenProps<RootStackParamList, 'DiveRequestDetail'>;
 
@@ -48,6 +49,14 @@ export default function DiveRequestDetailScreen({ navigation, route }: Props) {
   }, [requestId]);
 
   const fetchRequest = async () => {
+    // DEMO MODE
+    if (isDemoMode(profile?.id)) {
+      const found = DEMO_DIVE_REQUESTS.find((r) => r.id === requestId);
+      setRequest(found ?? null);
+      setLoading(false);
+      return;
+    }
+    // END DEMO MODE
     const { data } = await supabase
       .from('dive_requests')
       .select(`
@@ -63,6 +72,14 @@ export default function DiveRequestDetailScreen({ navigation, route }: Props) {
 
   const updateStatus = async (status: DiveRequestStatus) => {
     setActionLoading(true);
+    // DEMO MODE
+    if (isDemoMode(profile?.id)) {
+      await new Promise((r) => setTimeout(r, 400));
+      setRequest((prev: any) => ({ ...prev, status }));
+      setActionLoading(false);
+      return;
+    }
+    // END DEMO MODE
     const { error } = await supabase
       .from('dive_requests')
       .update({ status })
@@ -155,7 +172,7 @@ export default function DiveRequestDetailScreen({ navigation, route }: Props) {
         <View style={styles.card}>
           <Text style={styles.cardLabel}>{isRequester ? 'Requested buddy' : 'Request from'}</Text>
           <View style={styles.userRow}>
-            <UserAvatar uri={other?.avatar_url} name={other?.display_name} size={52} />
+            <UserAvatar avatarUrl={other?.avatar_url} name={other?.display_name} size={52} />
             <View style={styles.userInfo}>
               <Text style={styles.userName}>{other?.display_name}</Text>
               {other?.city_region ? (

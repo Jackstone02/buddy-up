@@ -166,6 +166,10 @@ export default function HomeCertifiedScreen() {
               </View>
               <View style={styles.buddyInfo}>
                 <Text style={styles.buddyName}>{item.display_name}</Text>
+                <View style={styles.rolePill}>
+                  <Ionicons name="people-outline" size={10} color={Colors.primary} />
+                  <Text style={styles.rolePillText}>Certified Buddy</Text>
+                </View>
                 <Text style={styles.buddyMeta}>
                   {item.certified?.cert_level ?? 'Certified'} · {item.city_region}
                 </Text>
@@ -281,6 +285,12 @@ const styles = StyleSheet.create({
   buddyName: { fontSize: FontSize.md, fontWeight: '700', color: Colors.text },
   buddyMeta: { fontSize: FontSize.sm, color: Colors.textSecondary, marginTop: 2 },
   buddyDisciplines: { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: 2 },
+  rolePill: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: Colors.primary + '12', borderRadius: Radius.full,
+    paddingHorizontal: 6, paddingVertical: 2, alignSelf: 'flex-start', marginTop: 2,
+  },
+  rolePillText: { fontSize: 10, color: Colors.primary, fontWeight: '700' },
   availableBadge: {
     flexDirection: 'row',
     alignItems: 'center',

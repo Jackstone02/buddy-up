@@ -1,5 +1,6 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useEffect, useRef } from 'react';
+import { Linking } from 'react-native';
+import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
 
@@ -11,6 +12,8 @@ import SignUpScreen from '../screens/auth/SignUpScreen';
 import RoleSelectionScreen from '../screens/auth/RoleSelectionScreen';
 import SocialOnboardingScreen from '../screens/auth/SocialOnboardingScreen';
 import TermsOfServiceScreen from '../screens/auth/TermsOfServiceScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
+import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 
 // Profile setup
 import ProfileSetupScreen from '../screens/profile/ProfileSetupScreen';
@@ -49,9 +52,40 @@ import RoleChangeScreen from '../screens/profile/RoleChangeScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+function parseResetUrl(url: string): { accessToken: string; refreshToken: string } | null {
+  try {
+    // Tokens can be in query params or hash fragment
+    const queryStr = url.includes('?') ? url.split('?')[1] : '';
+    const hashStr  = url.includes('#') ? url.split('#')[1] : '';
+    const params   = new URLSearchParams(queryStr + '&' + hashStr);
+    const accessToken  = params.get('accessToken');
+    const refreshToken = params.get('refreshToken');
+    if (accessToken && refreshToken) return { accessToken, refreshToken };
+  } catch {}
+  return null;
+}
+
 export default function AppNavigator() {
+  const navRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
+
+  useEffect(() => {
+    const handleUrl = (url: string) => {
+      if (url.includes('reset-password')) {
+        const tokens = parseResetUrl(url);
+        if (tokens) navRef.current?.navigate('ResetPassword', tokens);
+      }
+    };
+
+    // Cold start (app opened from deep link)
+    Linking.getInitialURL().then((url) => { if (url) handleUrl(url); });
+
+    // Warm start (app already open)
+    const sub = Linking.addEventListener('url', ({ url }) => handleUrl(url));
+    return () => sub.remove();
+  }, []);
+
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navRef}>
       <Stack.Navigator
         initialRouteName="Splash"
         screenOptions={{ headerShown: false }}
@@ -63,6 +97,8 @@ export default function AppNavigator() {
         <Stack.Screen name="SignUp" component={SignUpScreen} />
         <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
         <Stack.Screen name="SocialOnboarding" component={SocialOnboardingScreen} options={{ gestureEnabled: false, animation: 'fade' }} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+        <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ gestureEnabled: false, animation: 'fade' }} />
         <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
         <Stack.Screen name="VerificationPending" component={VerificationPendingScreen} />
 

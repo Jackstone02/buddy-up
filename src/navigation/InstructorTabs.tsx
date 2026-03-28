@@ -27,11 +27,11 @@ export default function InstructorTabs() {
         tabBarLabelStyle: { fontSize: FontSize.xs, fontWeight: '600' },
         tabBarIcon: ({ color, size, focused }) => {
           const icons: Record<string, [string, string]> = {
-            Dashboard: ['grid', 'grid-outline'],
-            Schedule:  ['calendar', 'calendar-outline'],
-            Find:      ['people', 'people-outline'],
-            Messages:  ['chatbubbles', 'chatbubbles-outline'],
-            Profile:   ['person-circle', 'person-circle-outline'],
+            Dashboard: ['grid',         'grid-outline'],
+            Find:      ['search',       'search-outline'],
+            Schedule:  ['calendar',     'calendar-outline'],
+            Messages:  ['chatbubbles',  'chatbubbles-outline'],
+            Profile:   ['person-circle','person-circle-outline'],
           };
           const [on, off] = icons[route.name] ?? ['ellipse', 'ellipse-outline'];
           return <Ionicons name={(focused ? on : off) as any} size={size} color={color} />;
@@ -39,13 +39,13 @@ export default function InstructorTabs() {
       })}
     >
       <Tab.Screen name="Dashboard" component={InstructorDashboardScreen} options={{ title: 'Dashboard' }} />
-      <Tab.Screen name="Schedule" component={AvailabilityScreen} options={{ title: 'Schedule' }} />
       <Tab.Screen
         name="Find"
         component={FindScreen}
         initialParams={{ defaultMode: 'buddy', showToggle: false }}
-        options={{ title: 'Find Buddy' }}
+        options={{ title: 'Find' }}
       />
+      <Tab.Screen name="Schedule" component={AvailabilityScreen} options={{ title: 'Schedule' }} />
       <Tab.Screen name="Messages" component={MessagesListScreen} options={{ title: 'Messages' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
     </Tab.Navigator>

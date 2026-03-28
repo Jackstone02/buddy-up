@@ -16,7 +16,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import CertBadge from '../../components/CertBadge';
 import UserAvatar from '../../components/UserAvatar';
-import { isDemoMode, DEMO_LESSON_TYPES, DEMO_IDS } from '../../lib/mockData'; // DEMO MODE
+import { isDemoMode, DEMO_LESSON_TYPES, DEMO_INSTRUCTORS, DEMO_IDS } from '../../lib/mockData'; // DEMO MODE
 
 type Props = NativeStackScreenProps<RootStackParamList, 'InstructorProfile'>;
 
@@ -33,23 +33,12 @@ export default function InstructorProfileScreen({ navigation, route }: Props) {
 
   const fetchInstructor = async () => {
     // DEMO MODE
-    if (isDemoMode(myProfile?.id) && instructorId === DEMO_IDS.instructor) {
-      setInstructor({
-        id: DEMO_IDS.instructor,
-        teaching_location: 'Cebu City, Philippines',
-        agencies: ['AIDA', 'SSI'],
-        certs_offered: ['AIDA Instructor', 'SSI Instructor'],
-        years_teaching: 8,
-        credentials_url: '',
-        profile: {
-          id: DEMO_IDS.instructor,
-          display_name: 'Demo Instructor',
-          verification_status: 'verified',
-          city_region: 'Cebu City, Philippines',
-          bio: 'Certified AIDA & SSI instructor with 8 years teaching experience.',
-        },
-      });
-      setLessonTypes(DEMO_LESSON_TYPES.filter((l) => l.instructor_id === DEMO_IDS.instructor));
+    if (isDemoMode(myProfile?.id)) {
+      const found = DEMO_INSTRUCTORS.find((i) => i.id === instructorId);
+      if (found) {
+        setInstructor(found);
+        setLessonTypes(DEMO_LESSON_TYPES.filter((l) => l.instructor_id === instructorId));
+      }
       setLoading(false);
       return;
     }

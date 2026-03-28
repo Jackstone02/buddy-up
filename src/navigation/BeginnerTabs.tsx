@@ -26,8 +26,8 @@ export default function BeginnerTabs() {
         tabBarLabelStyle: { fontSize: FontSize.xs, fontWeight: '600' },
         tabBarIcon: ({ color, size, focused }) => {
           const icons: Record<string, [string, string]> = {
-            Find:     ['school', 'school-outline'],
-            Bookings: ['calendar', 'calendar-outline'],
+            Find:     ['search', 'search-outline'],
+            Schedule: ['calendar', 'calendar-outline'],
             Messages: ['chatbubbles', 'chatbubbles-outline'],
             Profile:  ['person-circle', 'person-circle-outline'],
           };
@@ -40,9 +40,9 @@ export default function BeginnerTabs() {
         name="Find"
         component={FindScreen}
         initialParams={{ defaultMode: 'instructor', showToggle: false }}
-        options={{ title: 'Instructors' }}
+        options={{ title: 'Find' }}
       />
-      <Tab.Screen name="Bookings" component={MyBookingsScreen} options={{ title: 'Bookings' }} />
+      <Tab.Screen name="Schedule" component={MyBookingsScreen} options={{ title: 'Schedule' }} />
       <Tab.Screen name="Messages" component={MessagesListScreen} options={{ title: 'Messages' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
     </Tab.Navigator>

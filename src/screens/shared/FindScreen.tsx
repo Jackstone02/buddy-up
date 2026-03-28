@@ -411,6 +411,15 @@ export default function FindScreen() {
                     <Text style={[styles.mapCardName, isSelected && { color: Colors.primary }]} numberOfLines={1}>
                       {name}
                     </Text>
+                    {mode === 'buddy' ? (
+                      <View style={styles.mapCardRolePill}>
+                        <Text style={styles.mapCardRoleText}>Certified Buddy</Text>
+                      </View>
+                    ) : (
+                      <View style={[styles.mapCardRolePill, styles.mapCardRolePillInstructor]}>
+                        <Text style={[styles.mapCardRoleText, styles.mapCardRoleTextInstructor]}>Instructor</Text>
+                      </View>
+                    )}
                     <Text style={styles.mapCardSub} numberOfLines={1}>{sub}</Text>
                     {mode === 'buddy' && item.available_to_dive && (
                       <View style={styles.mapCardAvailBadge}>
@@ -473,6 +482,10 @@ function BuddyCard({ item, navigation }: any) {
             </View>
           )}
         </View>
+        <View style={styles.rolePill}>
+          <Ionicons name="people-outline" size={10} color={Colors.primary} />
+          <Text style={styles.rolePillText}>Certified Buddy</Text>
+        </View>
         <View style={styles.locationRow}>
           <Ionicons name="location-outline" size={13} color={Colors.textMuted} />
           <Text style={styles.locationText}>{item.city_region}</Text>
@@ -515,10 +528,10 @@ function InstructorCard({ item, navigation }: any) {
       <View style={styles.cardBody}>
         <View style={styles.cardTopRow}>
           <Text style={styles.cardName}>{name}</Text>
-          <View style={styles.verifiedBadge}>
-            <Ionicons name="checkmark-circle" size={13} color={Colors.success} />
-            <Text style={styles.verifiedText}>Verified</Text>
-          </View>
+        </View>
+        <View style={styles.instructorPill}>
+          <Ionicons name="school-outline" size={10} color={Colors.purple} />
+          <Text style={styles.instructorPillText}>Instructor</Text>
         </View>
         <View style={styles.locationRow}>
           <Ionicons name="location-outline" size={13} color={Colors.textMuted} />
@@ -695,10 +708,26 @@ const styles = StyleSheet.create({
   // Instructor badge
   verifiedBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 3,
-    backgroundColor: Colors.success + '15', borderRadius: Radius.full,
+    backgroundColor: Colors.purple + '18', borderRadius: Radius.full,
     paddingHorizontal: 6, paddingVertical: 2,
   },
-  verifiedText: { fontSize: FontSize.xs, color: Colors.success, fontWeight: '700' },
+  verifiedText: { fontSize: FontSize.xs, color: Colors.purple, fontWeight: '700' },
+
+  // Instructor role pill (list view)
+  instructorPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: Colors.purple + '12', borderRadius: Radius.full,
+    paddingHorizontal: 6, paddingVertical: 2, alignSelf: 'flex-start',
+  },
+  instructorPillText: { fontSize: 10, color: Colors.purple, fontWeight: '700' },
+
+  // Buddy role pill
+  rolePill: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: Colors.primary + '12', borderRadius: Radius.full,
+    paddingHorizontal: 6, paddingVertical: 2, alignSelf: 'flex-start',
+  },
+  rolePillText: { fontSize: 10, color: Colors.primary, fontWeight: '700' },
 
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   locationText: { fontSize: FontSize.sm, color: Colors.textSecondary },
@@ -784,6 +813,16 @@ const styles = StyleSheet.create({
   mapCardAvatarText: { color: '#fff', fontWeight: '800', fontSize: FontSize.sm },
   mapCardName: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.text },
   mapCardSub: { fontSize: FontSize.xs, color: Colors.textMuted },
+  mapCardRolePill: {
+    backgroundColor: Colors.primary + '18',
+    borderRadius: Radius.full,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    alignSelf: 'flex-start',
+  },
+  mapCardRolePillInstructor: { backgroundColor: Colors.purple + '18' },
+  mapCardRoleText: { fontSize: 9, color: Colors.primary, fontWeight: '700' },
+  mapCardRoleTextInstructor: { color: Colors.purple },
   mapCardAvailBadge: {
     backgroundColor: Colors.success + '20',
     borderRadius: Radius.full,

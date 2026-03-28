@@ -16,15 +16,17 @@ import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import { isDemoMode, getDemoRecentMessages, DEMO_INSTRUCTOR_BOOKINGS } from '../../lib/mockData'; // DEMO MODE
+import { Profile } from '../../types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export default function InstructorDashboardScreen() {
   const navigation = useNavigation<Nav>();
-  const { profile } = useAuthStore();
+  const { profile, setProfile } = useAuthStore();
   const [recentMessages, setRecentMessages] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [togglingAvailability, setTogglingAvailability] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -70,6 +72,24 @@ export default function InstructorDashboardScreen() {
     setRecentMessages(unique);
     setBookings(bookingResult.data || []);
     setLoading(false);
+  };
+
+  const toggleAvailability = async () => {
+    if (!profile) return;
+    if (isDemoMode(profile.id)) {
+      setProfile({ ...profile, available_to_dive: !profile.available_to_dive });
+      return;
+    }
+    setTogglingAvailability(true);
+    const newVal = !profile.available_to_dive;
+    const { data: updated } = await supabase
+      .from('profiles')
+      .update({ available_to_dive: newVal })
+      .eq('id', profile.id)
+      .select('*')
+      .single();
+    if (updated) setProfile(updated as Profile);
+    setTogglingAvailability(false);
   };
 
   const isVerified = profile?.verification_status === 'verified';
@@ -133,6 +153,29 @@ export default function InstructorDashboardScreen() {
             <Text style={styles.verifiedText}>You appear in instructor search</Text>
           </View>
         )}
+
+        {/* Buddy availability toggle */}
+        <View style={styles.toggleCard}>
+          <View style={styles.toggleInfo}>
+            <Text style={styles.toggleTitle}>Available as buddy</Text>
+            <Text style={styles.toggleDesc}>
+              {profile?.available_to_dive
+                ? 'You appear in buddy search for certified divers'
+                : 'Toggle on to also be findable as a dive buddy'}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.toggle, profile?.available_to_dive && styles.toggleOn]}
+            onPress={toggleAvailability}
+            disabled={togglingAvailability}
+          >
+            {togglingAvailability ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <View style={[styles.toggleKnob, profile?.available_to_dive && styles.toggleKnobOn]} />
+            )}
+          </TouchableOpacity>
+        </View>
 
         {/* Stats row */}
         <View style={styles.statsRow}>
@@ -240,6 +283,30 @@ const styles = StyleSheet.create({
     borderColor: Colors.success + '40',
   },
   verifiedText: { fontSize: FontSize.md, fontWeight: '700', color: Colors.success },
+  toggleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: Spacing.md,
+  },
+  toggleInfo: { flex: 1 },
+  toggleTitle: { fontSize: FontSize.md, fontWeight: '700', color: Colors.text },
+  toggleDesc: { fontSize: FontSize.xs, color: Colors.textSecondary, marginTop: 2, lineHeight: 16 },
+  toggle: {
+    width: 52, height: 30, borderRadius: 15,
+    backgroundColor: Colors.border, justifyContent: 'center', padding: 3,
+  },
+  toggleOn: { backgroundColor: Colors.primary },
+  toggleKnob: {
+    width: 24, height: 24, borderRadius: 12, backgroundColor: '#fff',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2, shadowRadius: 2, elevation: 2,
+  },
+  toggleKnobOn: { alignSelf: 'flex-end' },
   statsRow: { flexDirection: 'row', gap: Spacing.sm },
   statCard: {
     flex: 1,
