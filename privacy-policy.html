@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — Buddy Up</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F8FAFC;
+      color: #1E293B;
+      line-height: 1.7;
+    }
+    header {
+      background: linear-gradient(135deg, #0369A1, #0EA5E9);
+      padding: 28px 24px;
+      text-align: center;
+    }
+    .logo { font-size: 26px; font-weight: 900; color: #fff; letter-spacing: 1px; }
+    .logo-sub { font-size: 13px; color: rgba(255,255,255,0.75); letter-spacing: 3px; text-transform: uppercase; margin-top: 4px; }
+    nav { background: #fff; border-bottom: 1px solid #E2E8F0; padding: 12px 24px; text-align: center; }
+    nav a { color: #0369A1; text-decoration: none; font-size: 14px; font-weight: 600; margin: 0 12px; }
+    nav a:hover { text-decoration: underline; }
+    .container { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
+    h1 { font-size: 28px; font-weight: 800; color: #0369A1; margin-bottom: 8px; }
+    .last-updated { font-size: 13px; color: #94A3B8; margin-bottom: 36px; }
+    h2 { font-size: 18px; font-weight: 700; color: #0F172A; margin: 32px 0 10px; }
+    p  { font-size: 15px; color: #475569; margin-bottom: 14px; }
+    ul { padding-left: 20px; margin-bottom: 14px; }
+    li { font-size: 15px; color: #475569; margin-bottom: 6px; }
+    a  { color: #0369A1; }
+    .highlight {
+      background: #EFF6FF;
+      border-left: 4px solid #0EA5E9;
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin: 20px 0;
+      font-size: 15px;
+      color: #0F172A;
+    }
+    footer {
+      background: #0F172A;
+      color: #94A3B8;
+      text-align: center;
+      padding: 28px 24px;
+      font-size: 13px;
+    }
+    footer a { color: #22D3EE; text-decoration: none; margin: 0 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Buddy Up</div>
+    <div class="logo-sub">Never Dive Alone</div>
+  </header>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="privacy-policy.html">Privacy Policy</a>
+    <a href="delete-account.html">Delete Account</a>
+  </nav>
+
+  <div class="container">
+    <h1>Privacy Policy</h1>
+    <div class="last-updated">Last updated: March 28, 2026</div>
+
+    <div class="highlight">
+      Buddy Up is a safety-focused freediving community app. We take your privacy seriously.
+      This policy explains what data we collect, why, and how you can control it.
+    </div>
+
+    <h2>1. Who We Are</h2>
+    <p>
+      Buddy Up ("we", "us", "our") is a mobile application designed to connect certified freedivers
+      with dive buddies and freediving instructors. We are committed to responsible data practices
+      and comply with applicable privacy laws.
+    </p>
+
+    <h2>2. Data We Collect</h2>
+    <p>We collect the following categories of information:</p>
+    <ul>
+      <li><strong>Account data:</strong> Email address, display name, and password (stored securely via Supabase Auth).</li>
+      <li><strong>Profile data:</strong> Role (beginner / certified / instructor), city/region, bio, avatar image, certification level, agency, years of experience, and disciplines.</li>
+      <li><strong>Verification data:</strong> Certification card images and instructor credential images (stored in Supabase Storage).</li>
+      <li><strong>Messages:</strong> Content of direct messages sent between users within the app.</li>
+      <li><strong>Dive requests:</strong> Requested date, location name, disciplines, and any notes attached to a dive request.</li>
+      <li><strong>Reports &amp; blocks:</strong> Reason and details of user reports; block relationships between users.</li>
+      <li><strong>Usage data:</strong> Standard server logs (IP address, timestamp, device type) collected automatically by Supabase and Expo.</li>
+    </ul>
+
+    <h2>3. How We Use Your Data</h2>
+    <ul>
+      <li>To create and authenticate your account.</li>
+      <li>To display your profile to other verified users in search results.</li>
+      <li>To facilitate messaging and dive request coordination between users.</li>
+      <li>To verify instructor and certified diver credentials before granting full access.</li>
+      <li>To enforce safety and community standards (reports, blocks, age verification).</li>
+      <li>To send transactional emails (email confirmation, password reset) via Supabase.</li>
+      <li>To improve the app and diagnose technical issues.</li>
+    </ul>
+
+    <h2>4. Data Sharing</h2>
+    <p>We do not sell your personal data. We share data only in these limited circumstances:</p>
+    <ul>
+      <li><strong>Other users:</strong> Your public profile (display name, city/region, bio, avatar, cert level, disciplines) is visible to authenticated app users based on your role permissions.</li>
+      <li><strong>Supabase:</strong> Our backend provider. Data is stored in Supabase's hosted PostgreSQL and Storage services. See <a href="https://supabase.com/privacy" target="_blank">Supabase Privacy Policy</a>.</li>
+      <li><strong>Legal requirements:</strong> We may disclose data if required by law or to protect user safety.</li>
+    </ul>
+
+    <h2>5. Data Retention</h2>
+    <p>
+      We retain your data for as long as your account is active. Deleted accounts are removed from
+      the app within 30 days. Certification and credential images are deleted when your account is
+      deleted or when you upload a replacement.
+    </p>
+
+    <h2>6. Your Rights</h2>
+    <p>You have the right to:</p>
+    <ul>
+      <li>Access the personal data we hold about you.</li>
+      <li>Correct inaccurate data via the Profile Edit screen in the app.</li>
+      <li>Delete your account and all associated data — see our <a href="delete-account.html">Account Deletion page</a>.</li>
+      <li>Withdraw consent at any time by deleting your account.</li>
+    </ul>
+
+    <h2>7. Age Requirement</h2>
+    <p>
+      Buddy Up is strictly for users aged 18 and over. We require users to confirm their age at
+      signup. If we become aware that a user is under 18, their account will be immediately deleted.
+    </p>
+
+    <h2>8. Security</h2>
+    <p>
+      All data is transmitted over HTTPS. Passwords are hashed by Supabase Auth and never stored
+      in plaintext. Certification images are stored in private Supabase Storage buckets accessible
+      only to the authenticated user and admins.
+    </p>
+
+    <h2>9. Cookies &amp; Tracking</h2>
+    <p>
+      The Buddy Up mobile app does not use cookies. The GitHub Pages website (this page) does not
+      use tracking cookies or analytics.
+    </p>
+
+    <h2>10. Changes to This Policy</h2>
+    <p>
+      We may update this policy from time to time. Significant changes will be communicated
+      in-app. Continued use of the app after changes constitutes acceptance of the updated policy.
+    </p>
+
+    <h2>11. Contact</h2>
+    <p>
+      For privacy-related questions or data requests, please open an issue on our
+      <a href="https://github.com/jackstone02/buddy-up" target="_blank">GitHub repository</a>.
+    </p>
+  </div>
+
+  <footer>
+    &copy; 2026 Buddy Up &nbsp;|&nbsp;
+    <a href="privacy-policy.html">Privacy Policy</a>
+    <a href="delete-account.html">Delete Account</a>
+    <a href="index.html">Home</a>
+  </footer>
+</body>
+</html>

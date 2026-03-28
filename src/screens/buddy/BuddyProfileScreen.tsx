@@ -148,10 +148,20 @@ export default function BuddyProfileScreen({ navigation, route }: Props) {
 
       {myProfile?.id !== buddyId && (
         <SafeAreaView edges={['bottom']} style={styles.cta}>
-          <TouchableOpacity style={styles.ctaBtn} onPress={handleMessage} activeOpacity={0.85}>
-            <Ionicons name="chatbubble-outline" size={20} color="#fff" style={{ marginRight: Spacing.sm }} />
-            <Text style={styles.ctaBtnText}>Message</Text>
-          </TouchableOpacity>
+          <View style={styles.ctaRow}>
+            <TouchableOpacity style={styles.ctaBtnSecondary} onPress={handleMessage} activeOpacity={0.85}>
+              <Ionicons name="chatbubble-outline" size={18} color={Colors.primary} />
+              <Text style={styles.ctaBtnSecondaryText}>Message</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.ctaBtn}
+              onPress={() => navigation.navigate('DiveRequestForm', { buddyId, buddyName: buddy?.display_name ?? 'Buddy' })}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="water-outline" size={18} color="#fff" />
+              <Text style={styles.ctaBtnText}>Request Dive</Text>
+            </TouchableOpacity>
+          </View>
         </SafeAreaView>
       )}
     </View>
@@ -261,10 +271,25 @@ const styles = StyleSheet.create({
     borderTopColor: Colors.border,
     padding: Spacing.md,
   },
-  ctaBtn: {
+  ctaRow: { flexDirection: 'row', gap: Spacing.sm },
+  ctaBtnSecondary: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: Spacing.xs,
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    borderRadius: Radius.md,
+    paddingVertical: 14,
+  },
+  ctaBtnSecondaryText: { color: Colors.primary, fontSize: FontSize.md, fontWeight: '700' },
+  ctaBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
     backgroundColor: Colors.primary,
     borderRadius: Radius.md,
     paddingVertical: 14,

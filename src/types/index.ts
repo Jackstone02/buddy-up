@@ -2,6 +2,7 @@
 export type UserRole = 'beginner' | 'certified' | 'instructor' | 'admin';
 export type VerificationStatus = 'none' | 'pending' | 'verified' | 'rejected';
 export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
+export type DiveRequestStatus = 'pending' | 'accepted' | 'declined' | 'cancelled';
 export type Discipline =
   | 'pool'
   | 'depth'
@@ -106,6 +107,21 @@ export interface Booking {
   lesson_type?: any;
 }
 
+export interface DiveRequest {
+  id: string;
+  requester_id: string;
+  buddy_id: string;
+  requested_date: string;
+  location_name: string;
+  disciplines: Discipline[];
+  notes: string | null;
+  status: DiveRequestStatus;
+  created_at: string;
+  // joined
+  requester?: any;
+  buddy?: any;
+}
+
 // ─── Navigation Param Lists ────────────────────────────────────────────────
 
 export type RootStackParamList = {
@@ -137,6 +153,9 @@ export type RootStackParamList = {
   AdminTabs: undefined;
   AdminUserDetail: { userId: string };
   RoleChange: undefined;
+  // Dive request routes
+  DiveRequestForm: { buddyId: string; buddyName: string };
+  DiveRequestDetail: { requestId: string };
 };
 
 export type FindMode = 'buddy' | 'instructor';
@@ -156,6 +175,7 @@ export type BeginnerTabParamList = {
 export type CertifiedTabParamList = {
   Home: undefined;
   Find: { defaultMode: FindMode; showToggle: boolean };
+  Requests: undefined;
   Bookings: undefined;
   Messages: undefined;
   Profile: undefined;

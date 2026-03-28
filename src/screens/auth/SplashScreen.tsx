@@ -70,6 +70,9 @@ export default function SplashScreen({ navigation }: Props) {
           }
         } else if (role === 'admin') {
           navigation.replace('AdminTabs');
+        } else {
+          // Role not set — resume onboarding
+          navigation.replace('SocialOnboarding');
         }
       } else {
         navigation.replace('Welcome');

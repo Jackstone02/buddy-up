@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Delete Account — Buddy Up</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F8FAFC;
+      color: #1E293B;
+      line-height: 1.7;
+    }
+    header {
+      background: linear-gradient(135deg, #0369A1, #0EA5E9);
+      padding: 28px 24px;
+      text-align: center;
+    }
+    .logo { font-size: 26px; font-weight: 900; color: #fff; letter-spacing: 1px; }
+    .logo-sub { font-size: 13px; color: rgba(255,255,255,0.75); letter-spacing: 3px; text-transform: uppercase; margin-top: 4px; }
+    nav { background: #fff; border-bottom: 1px solid #E2E8F0; padding: 12px 24px; text-align: center; }
+    nav a { color: #0369A1; text-decoration: none; font-size: 14px; font-weight: 600; margin: 0 12px; }
+    nav a:hover { text-decoration: underline; }
+    .container { max-width: 720px; margin: 0 auto; padding: 40px 24px 80px; }
+    h1 { font-size: 28px; font-weight: 800; color: #DC2626; margin-bottom: 8px; }
+    .subtitle { font-size: 15px; color: #64748B; margin-bottom: 36px; }
+    h2 { font-size: 18px; font-weight: 700; color: #0F172A; margin: 32px 0 10px; }
+    p  { font-size: 15px; color: #475569; margin-bottom: 14px; }
+    ul { padding-left: 20px; margin-bottom: 14px; }
+    li { font-size: 15px; color: #475569; margin-bottom: 6px; }
+    a  { color: #0369A1; }
+    .warning {
+      background: #FEF2F2;
+      border-left: 4px solid #EF4444;
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin: 20px 0;
+      font-size: 15px;
+      color: #7F1D1D;
+    }
+    .step-list { list-style: none; padding: 0; counter-reset: steps; }
+    .step-list li {
+      counter-increment: steps;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+    .step-list li::before {
+      content: counter(steps);
+      min-width: 32px;
+      height: 32px;
+      background: #0EA5E9;
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .step-content strong { display: block; font-size: 15px; color: #0F172A; margin-bottom: 4px; }
+    .step-content span   { font-size: 14px; color: #64748B; }
+    footer {
+      background: #0F172A;
+      color: #94A3B8;
+      text-align: center;
+      padding: 28px 24px;
+      font-size: 13px;
+    }
+    footer a { color: #22D3EE; text-decoration: none; margin: 0 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Buddy Up</div>
+    <div class="logo-sub">Never Dive Alone</div>
+  </header>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="privacy-policy.html">Privacy Policy</a>
+    <a href="delete-account.html">Delete Account</a>
+  </nav>
+
+  <div class="container">
+    <h1>Delete Your Account</h1>
+    <div class="subtitle">We're sorry to see you go. Here's everything you need to know.</div>
+
+    <div class="warning">
+      <strong>⚠️ Account deletion is permanent.</strong> All your profile data, messages, dive requests,
+      and uploaded images will be permanently removed and cannot be recovered.
+    </div>
+
+    <h2>What Gets Deleted</h2>
+    <ul>
+      <li>Your profile (display name, bio, avatar, city/region)</li>
+      <li>Your certification or instructor credentials and uploaded images</li>
+      <li>All direct messages sent and received</li>
+      <li>All dive requests you sent or received</li>
+      <li>Your account credentials (email, hashed password)</li>
+    </ul>
+
+    <h2>What Is Retained</h2>
+    <ul>
+      <li>
+        <strong>Reports you submitted</strong> — Reports about other users are kept for safety and
+        moderation purposes, but your identity will be anonymized within 30 days.
+      </li>
+      <li>
+        <strong>Server logs</strong> — Standard server logs (IP address, timestamps) may be retained
+        for up to 90 days for security purposes.
+      </li>
+    </ul>
+
+    <h2>How to Delete Your Account</h2>
+    <ul class="step-list">
+      <li>
+        <div class="step-content">
+          <strong>Open the Buddy Up app</strong>
+          <span>Sign in to your account if you're not already logged in.</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-content">
+          <strong>Go to Settings</strong>
+          <span>Tap the Settings icon on your profile or home screen.</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-content">
+          <strong>Tap "Delete Account"</strong>
+          <span>Scroll to the bottom of Settings and tap the Delete Account option.</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-content">
+          <strong>Confirm deletion</strong>
+          <span>You'll be asked to confirm once. After confirmation, deletion begins immediately.</span>
+        </div>
+      </li>
+    </ul>
+
+    <h2>Can't Access the App?</h2>
+    <p>
+      If you're unable to access your account to delete it, please open an issue on our
+      <a href="https://github.com/jackstone02/buddy-up/issues" target="_blank">GitHub repository</a>
+      with the subject <strong>"Account Deletion Request"</strong> and include the email address
+      associated with your account. We will process your request within 7 business days.
+    </p>
+
+    <h2>Timeline</h2>
+    <p>
+      Account deletion is processed immediately upon confirmation in the app. Profile data, messages,
+      and images are removed within <strong>24 hours</strong>. Any anonymization of moderation records
+      is completed within <strong>30 days</strong>.
+    </p>
+  </div>
+
+  <footer>
+    &copy; 2026 Buddy Up &nbsp;|&nbsp;
+    <a href="privacy-policy.html">Privacy Policy</a>
+    <a href="delete-account.html">Delete Account</a>
+    <a href="index.html">Home</a>
+  </footer>
+</body>
+</html>

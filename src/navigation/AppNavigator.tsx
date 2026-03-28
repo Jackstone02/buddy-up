@@ -26,6 +26,8 @@ import SettingsScreen from '../screens/shared/SettingsScreen';
 // Detail screens
 import InstructorProfileScreen from '../screens/instructor/InstructorProfileScreen';
 import BuddyProfileScreen from '../screens/buddy/BuddyProfileScreen';
+import DiveRequestFormScreen from '../screens/buddy/DiveRequestFormScreen';
+import DiveRequestDetailScreen from '../screens/buddy/DiveRequestDetailScreen';
 
 // Booking screens
 import BookingFormScreen from '../screens/shared/BookingFormScreen';
@@ -87,6 +89,10 @@ export default function AppNavigator() {
 
         {/* Admin */}
         <Stack.Screen name="AdminUserDetail" component={AdminUserDetailScreen} />
+
+        {/* Dive request flow */}
+        <Stack.Screen name="DiveRequestForm" component={DiveRequestFormScreen} />
+        <Stack.Screen name="DiveRequestDetail" component={DiveRequestDetailScreen} />
 
         {/* Booking flow */}
         <Stack.Screen name="BookingForm" component={BookingFormScreen} />

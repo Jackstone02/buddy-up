@@ -53,7 +53,7 @@ export default function SocialOnboardingScreen({ navigation }: Props) {
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [tosConfirmed, setTosConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { setProfile } = useAuthStore();
+  const { setProfile, clearAuth } = useAuthStore();
   const { visible, isLoading, config, showModal, handleConfirm, handleCancel } = useAppModal();
 
   const handleContinue = async () => {
@@ -66,29 +66,37 @@ export default function SocialOnboardingScreen({ navigation }: Props) {
       return;
     }
 
-    // TODO: remove when DB is connected
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role: selectedRole, age_confirmed: true, tos_accepted_at: new Date().toISOString() })
+      .eq('id', user.id);
+    if (error) {
+      showModal({ type: 'error', title: 'Error', message: 'Failed to save. Please try again.' });
+      setLoading(false);
+      return;
+    }
     navigation.replace('ProfileSetup', { role: selectedRole });
-
-    // UNCOMMENT when DB is connected (remove the line above too):
-    // setLoading(true);
-    // const { data: { user } } = await supabase.auth.getUser();
-    // if (!user) { setLoading(false); return; }
-    // const { error } = await supabase
-    //   .from('profiles')
-    //   .update({ role: selectedRole, age_confirmed: true, tos_accepted_at: new Date().toISOString() })
-    //   .eq('id', user.id);
-    // if (error) {
-    //   showModal({ type: 'error', title: 'Error', message: 'Failed to save. Please try again.' });
-    //   setLoading(false);
-    //   return;
-    // }
-    // navigation.replace('ProfileSetup', { role: selectedRole });
-    // setLoading(false);
+    setLoading(false);
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <SafeAreaView style={styles.header} edges={['top']}>
+        <TouchableOpacity
+          style={styles.switchAccountBtn}
+          onPress={async () => {
+            await supabase.auth.signOut();
+            clearAuth();
+            navigation.replace('Welcome');
+          }}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="swap-horizontal-outline" size={13} color="#fff" />
+          <Text style={styles.switchAccountText}>Use a different account</Text>
+        </TouchableOpacity>
         <View style={styles.stepRow}>
           <View style={[styles.stepDot, styles.stepDotDone]} />
           <View style={[styles.stepLine, styles.stepLineDone]} />
@@ -185,6 +193,7 @@ export default function SocialOnboardingScreen({ navigation }: Props) {
               </>
             )}
           </TouchableOpacity>
+
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -294,4 +303,16 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6, shadowOpacity: 0 },
   buttonText: { color: '#fff', fontSize: FontSize.md, fontWeight: '700', letterSpacing: 0.5 },
+  switchAccountBtn: {
+    alignSelf: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: Spacing.sm,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: Radius.full,
+    marginBottom: Spacing.md,
+  },
+  switchAccountText: { fontSize: FontSize.xs, color: '#fff', fontWeight: '600' },
 });

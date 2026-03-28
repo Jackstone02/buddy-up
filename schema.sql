@@ -169,6 +169,45 @@ create table if not exists buddy_up.blocks (
 -- V2 TABLES (stubbed — schema ready, no UI yet)
 -- ============================================================
 
+-- ─── dive_requests ───────────────────────────────────────────
+-- Buddy dive requests between certified divers.
+create table if not exists buddy_up.dive_requests (
+  id              uuid primary key default gen_random_uuid(),
+  requester_id    uuid references buddy_up.profiles on delete cascade,
+  buddy_id        uuid references buddy_up.profiles on delete cascade,
+  requested_date  date not null,
+  location_name   text not null,
+  disciplines     text[] default '{}',
+  notes           text,
+  status          text default 'pending'
+                  check (status in ('pending','accepted','declined','cancelled')),
+  created_at      timestamptz default now()
+);
+
+create index if not exists idx_dive_requests_requester on buddy_up.dive_requests(requester_id, created_at desc);
+create index if not exists idx_dive_requests_buddy     on buddy_up.dive_requests(buddy_id, created_at desc);
+
+alter table buddy_up.dive_requests enable row level security;
+
+drop policy if exists "dive_requests: read own"            on buddy_up.dive_requests;
+drop policy if exists "dive_requests: insert as requester" on buddy_up.dive_requests;
+drop policy if exists "dive_requests: update own"          on buddy_up.dive_requests;
+
+create policy "dive_requests: read own"
+  on buddy_up.dive_requests for select
+  to authenticated
+  using (auth.uid() = requester_id or auth.uid() = buddy_id);
+
+create policy "dive_requests: insert as requester"
+  on buddy_up.dive_requests for insert
+  to authenticated
+  with check (auth.uid() = requester_id);
+
+create policy "dive_requests: update own"
+  on buddy_up.dive_requests for update
+  to authenticated
+  using (auth.uid() = requester_id or auth.uid() = buddy_id);
+
 -- ─── dive_logs ───────────────────────────────────────────────
 create table if not exists buddy_up.dive_logs (
   id             uuid primary key default gen_random_uuid(),

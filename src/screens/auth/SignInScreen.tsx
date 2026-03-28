@@ -86,6 +86,9 @@ export default function SignInScreen({ navigation }: Props) {
         else if (!safetyOk) navigation.replace('Safety', { nextRoute: 'InstructorTabs' });
         else navigation.replace('InstructorTabs');
       }
+    } else {
+      // Role not set — user abandoned onboarding, resume it
+      navigation.replace('SocialOnboarding');
     }
   };
 

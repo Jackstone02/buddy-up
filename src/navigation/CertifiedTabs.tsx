@@ -6,6 +6,7 @@ import { CertifiedTabParamList } from '../types';
 
 import HomeCertifiedScreen from '../screens/buddy/HomeCertifiedScreen';
 import FindScreen from '../screens/shared/FindScreen';
+import MyDiveRequestsScreen from '../screens/buddy/MyDiveRequestsScreen';
 import MyBookingsScreen from '../screens/shared/MyBookingsScreen';
 import MessagesListScreen from '../screens/shared/MessagesListScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
@@ -29,6 +30,7 @@ export default function CertifiedTabs() {
           const icons: Record<string, [string, string]> = {
             Home:     ['home', 'home-outline'],
             Find:     ['search', 'search-outline'],
+            Requests: ['people', 'people-outline'],
             Bookings: ['calendar', 'calendar-outline'],
             Messages: ['chatbubbles', 'chatbubbles-outline'],
             Profile:  ['person-circle', 'person-circle-outline'],
@@ -45,6 +47,7 @@ export default function CertifiedTabs() {
         initialParams={{ defaultMode: 'instructor', showToggle: true }}
         options={{ title: 'Find' }}
       />
+      <Tab.Screen name="Requests" component={MyDiveRequestsScreen} options={{ title: 'Requests' }} />
       <Tab.Screen name="Bookings" component={MyBookingsScreen} options={{ title: 'Bookings' }} />
       <Tab.Screen name="Messages" component={MessagesListScreen} options={{ title: 'Messages' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />

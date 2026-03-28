@@ -126,24 +126,38 @@ export default function SignUpScreen({ navigation }: Props) {
       return;
     }
 
-    // TODO: remove when DB is connected
-    navigation.replace('SocialOnboarding');
+    setLoading(true);
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) {
+      showModal({ type: 'error', title: 'Sign Up Failed', message: error.message });
+      setLoading(false);
+      return;
+    }
 
-    // UNCOMMENT when DB is connected (remove the line above too):
-    // setLoading(true);
-    // const { data, error } = await supabase.auth.signUp({
-    //   email,
-    //   password,
-    //   options: { data: { full_name: displayName.trim() } },
-    // });
-    // if (error) {
-    //   showModal({ type: 'error', title: 'Sign Up Failed', message: error.message });
-    //   setLoading(false);
-    //   return;
-    // }
-    // if (data.session) setSession(data.session);
-    // navigation.replace('SocialOnboarding');
-    // setLoading(false);
+    // Save display_name to profile stub created by trigger
+    if (data.user) {
+      await supabase
+        .from('profiles')
+        .update({ display_name: displayName.trim() })
+        .eq('id', data.user.id);
+    }
+
+    setLoading(false);
+
+    if (data.session) {
+      // Email confirmation is OFF — go straight to onboarding
+      setSession(data.session);
+      navigation.replace('SocialOnboarding');
+    } else {
+      // Email confirmation is ON — user must confirm before signing in
+      showModal({
+        type: 'success',
+        title: 'Check Your Email',
+        message: `We sent a confirmation link to ${email}. Please confirm it then sign in to continue.`,
+        confirmText: 'Go to Sign In',
+        onConfirm: () => navigation.replace('SignIn'),
+      });
+    }
   };
 
   return (
