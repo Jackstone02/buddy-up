@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Buddy Up",
-    "slug": "buddy-up",
+    "name": "Buddyline",
+    "slug": "buddyline",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,20 +12,21 @@
       "backgroundColor": "#0369A1"
     },
     "scheme": [
-      "buddyup",
-      "com.buddyup.app"
+      "buddyline",
+      "com.buddyline.app"
     ],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.buddyup.app",
+      "bundleIdentifier": "com.buddyline.app",
       "usesAppleSignIn": true,
       "config": {
         "googleMapsApiKey": "AIzaSyDcaDaB4hdR4SGGGotR7l8saIR8Zp_zPY0"
       },
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Buddy Up needs your location to show nearby divers and instructors.",
-        "NSCameraUsageDescription": "Buddy Up needs camera access for profile photos and certifications.",
-        "NSPhotoLibraryUsageDescription": "Buddy Up needs photo library access to upload profile photos and certifications."
+        "NSLocationWhenInUseUsageDescription": "Buddyline needs your location to show nearby divers and instructors.",
+        "NSCameraUsageDescription": "Buddyline needs camera access for profile photos and certifications.",
+        "NSPhotoLibraryUsageDescription": "Buddyline needs photo library access to upload profile photos and certifications.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -35,7 +36,7 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.buddyup.app",
+      "package": "com.buddyline.app",
       "predictiveBackGestureEnabled": false,
       "config": {
         "googleMaps": {
@@ -48,9 +49,10 @@
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE"
       ],
       "intentFilters": [
         {
@@ -81,14 +83,23 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Buddy Up to access your photos for profile pictures and certifications.",
-          "cameraPermission": "Allow Buddy Up to access your camera."
+          "photosPermission": "Allow Buddyline to access your photos for profile pictures and certifications.",
+          "cameraPermission": "Allow Buddyline to access your camera."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#1CA7A6",
+          "sounds": []
         }
       ]
     ],
+    "owner": "jackstone",
     "extra": {
       "eas": {
-        "projectId": "2c2d1fee-667d-4ef9-ab53-4cb5ad6d0231"
+        "projectId": "9f683cf8-f13d-428d-b31a-5f3135929e86"
       }
     }
   }

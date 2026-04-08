@@ -1,29 +1,29 @@
 export const Colors = {
-  // Hero / sections — vibrant medium blue (NOT dark navy)
-  primaryDeep: '#0369A1',      // vivid sky-ocean blue — hero backgrounds
-  primaryDark: '#075985',      // deeper sky blue
-  primary: '#0EA5E9',          // vivid sky blue — buttons, links
-  primaryMid: '#38BDF8',       // bright sky
-  primaryLight: '#7DD3FC',     // pale sky
+  // Brand primaries
+  primaryDeep: '#0B3C5D',      // deep navy — hero backgrounds, headers
+  primaryDark: '#082D47',      // darker navy — pressed states, shadows
+  primary: '#1CA7A6',          // teal — buttons, links, primary actions
+  primaryMid: '#28BFC0',       // lighter teal — hover / focus states
+  primaryLight: '#A8DADB',     // pale teal — chips, soft highlights
 
-  // Accent — electric cyan
-  accent: '#22D3EE',           // electric cyan — highlights, badges
-  accentLight: '#A5F3FC',      // very light cyan
-  secondary: '#0891B2',        // medium cyan — secondary CTAs
+  // Accent — teal (same family, used for badges and highlights)
+  accent: '#1CA7A6',           // teal
+  accentLight: '#B2DFDF',      // very light teal
+  secondary: '#155E8A',        // mid navy — secondary CTAs
 
-  // App backgrounds — visible sky-blue tint
-  background: '#F0F9FF',       // light sky (noticeable blue tint, energetic)
+  // App backgrounds — off-white (clean, calm)
+  background: '#F4F1EA',       // brand off-white
   surface: '#FFFFFF',
-  surfaceBlue: '#E0F2FE',      // sky-blue tint — selected / alternate cards
+  surfaceBlue: '#EAF6F6',      // light teal tint — selected / alternate cards
 
   // Text
-  text: '#0C1A3D',             // dark indigo
-  textSecondary: '#475569',    // cool slate
-  textMuted: '#94A3B8',        // lighter slate
+  text: '#0B3C5D',             // deep navy
+  textSecondary: '#4A6572',    // muted navy-grey
+  textMuted: '#8B9DAA',        // light grey-blue
 
-  // Borders — sky blue (more saturated)
-  border: '#BAE6FD',
-  borderFocus: '#0EA5E9',
+  // Borders
+  border: '#D5CFC4',           // warm off-white border
+  borderFocus: '#1CA7A6',      // teal focus ring
 
   // Status
   error: '#EF4444',

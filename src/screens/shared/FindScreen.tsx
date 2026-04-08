@@ -29,12 +29,6 @@ import { useAuthStore } from '../../store/authStore';
 import CertBadge from '../../components/CertBadge';
 import UserAvatar from '../../components/UserAvatar';
 import { haversineKm, getCurrentCoords, DISTANCE_OPTIONS, DistanceFilter } from '../../lib/location';
-import {
-  isDemoMode,
-  DEMO_BUDDIES,
-  DEMO_INSTRUCTORS,
-} from '../../lib/mockData'; // DEMO MODE
-
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 const CERT_FILTERS = ['All', 'AIDA 2', 'AIDA 3', 'AIDA 4', 'SSI Level 2', 'SSI Level 3'];
@@ -83,26 +77,6 @@ export default function FindScreen() {
   };
 
   const fetchBuddies = async () => {
-    // DEMO MODE
-    if (isDemoMode(profile!.id)) {
-      let filtered = (DEMO_BUDDIES as any[]).filter((b) => b.id !== profile!.id);
-      if (availableOnly) filtered = filtered.filter((b) => b.available_to_dive);
-      if (search.trim()) {
-        const q = search.trim().toLowerCase();
-        filtered = filtered.filter((b) => b.city_region.toLowerCase().includes(q));
-      }
-      if (disciplineFilter) filtered = filtered.filter((b) => (b.certified?.disciplines || []).includes(disciplineFilter));
-      if (distanceFilter !== 'any' && userCoords) {
-        filtered = filtered.filter((b) =>
-          b.latitude != null && b.longitude != null &&
-          haversineKm(userCoords.latitude, userCoords.longitude, b.latitude, b.longitude) <= distanceFilter
-        );
-      }
-      setResults(filtered);
-      return;
-    }
-    // END DEMO MODE
-
     let query = supabase
       .from('profiles')
       .select('*, certified:certified_profiles!id(*)')
@@ -136,24 +110,6 @@ export default function FindScreen() {
   };
 
   const fetchInstructors = async () => {
-    // DEMO MODE
-    if (isDemoMode(profile!.id)) {
-      let filtered = DEMO_INSTRUCTORS as any[];
-      if (search.trim()) {
-        const q = search.trim().toLowerCase();
-        filtered = filtered.filter((i) => i.teaching_location.toLowerCase().includes(q));
-      }
-      if (distanceFilter !== 'any' && userCoords) {
-        filtered = filtered.filter((i: any) =>
-          i.profile?.latitude != null && i.profile?.longitude != null &&
-          haversineKm(userCoords.latitude, userCoords.longitude, i.profile.latitude, i.profile.longitude) <= distanceFilter
-        );
-      }
-      setResults(filtered);
-      return;
-    }
-    // END DEMO MODE
-
     let query = supabase
       .from('instructor_profiles')
       .select('*, profile:profiles!id(*)')

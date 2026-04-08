@@ -17,7 +17,6 @@ import { RootStackParamList, AvailabilitySlot, Booking, BookingStatus } from '..
 import { Colors, Spacing, FontSize, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
-import { isDemoMode, DEMO_SLOTS, DEMO_INSTRUCTOR_BOOKINGS } from '../../lib/mockData'; // DEMO MODE
 import AppModal from '../../components/AppModal';
 import { useAppModal } from '../../hooks/useAppModal';
 
@@ -86,14 +85,6 @@ export default function AvailabilityScreen() {
   const fetchData = async () => {
     if (!profile) return;
 
-    // DEMO MODE
-    if (isDemoMode(profile.id)) {
-      setSlots(DEMO_SLOTS as any);
-      setBookings(DEMO_INSTRUCTOR_BOOKINGS as any);
-      return;
-    }
-    // END DEMO MODE
-
     const [{ data: slotsData }, { data: bookingsData }] = await Promise.all([
       supabase
         .from('availability_slots')
@@ -117,15 +108,6 @@ export default function AvailabilityScreen() {
   const fetchRequests = async () => {
     if (!profile) return;
     setRequestsLoading(true);
-
-    // DEMO MODE
-    if (isDemoMode(profile.id)) {
-      const filtered = (DEMO_INSTRUCTOR_BOOKINGS as any[]).filter((b) => b.status === requestTab);
-      setRequests(filtered);
-      setRequestsLoading(false);
-      return;
-    }
-    // END DEMO MODE
 
     const { data } = await supabase
       .from('bookings')
@@ -183,28 +165,6 @@ export default function AvailabilityScreen() {
       return;
     }
 
-    // DEMO MODE
-    if (isDemoMode(profile.id)) {
-      const newSlot: AvailabilitySlot = {
-        id: `dslot-local-${Date.now()}`,
-        instructor_id: profile.id,
-        slot_date: selectedDate,
-        start_time: start,
-        end_time: end,
-        is_booked: false,
-      };
-      setSlots((prev) =>
-        [...prev, newSlot].sort(
-          (a, b) =>
-            a.slot_date.localeCompare(b.slot_date) ||
-            a.start_time.localeCompare(b.start_time)
-        )
-      );
-      setShowAddForm(false);
-      return;
-    }
-    // END DEMO MODE
-
     const { error } = await supabase.from('availability_slots').insert({
       instructor_id: profile.id,
       slot_date: selectedDate,
@@ -233,12 +193,6 @@ export default function AvailabilityScreen() {
       cancelText: 'Cancel',
       showCancel: true,
       onConfirm: async () => {
-        // DEMO MODE
-        if (isDemoMode(profile?.id)) {
-          setSlots((prev) => prev.filter((s) => s.id !== slotId));
-          return;
-        }
-        // END DEMO MODE
         await supabase.from('availability_slots').delete().eq('id', slotId);
         setSlots((prev) => prev.filter((s) => s.id !== slotId));
       },

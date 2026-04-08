@@ -19,7 +19,6 @@ import { supabase } from '../../lib/supabase';
 import CertBadge from '../../components/CertBadge';
 import UserAvatar from '../../components/UserAvatar';
 import { useAuthStore } from '../../store/authStore';
-import { isDemoMode, DEMO_INSTRUCTORS } from '../../lib/mockData'; // DEMO MODE
 import { haversineKm, getCurrentCoords, DISTANCE_OPTIONS, DistanceFilter } from '../../lib/location';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -42,25 +41,6 @@ export default function FindInstructorScreen() {
 
   const fetchInstructors = async () => {
     setLoading(true);
-
-    // DEMO MODE — skip Supabase when using demo account
-    if (isDemoMode(profile?.id)) {
-      let filtered = DEMO_INSTRUCTORS as any[];
-      if (search.trim()) {
-        const q = search.trim().toLowerCase();
-        filtered = filtered.filter((i) => i.teaching_location.toLowerCase().includes(q));
-      }
-      if (distanceFilter !== 'any' && userCoords) {
-        filtered = filtered.filter((i: any) =>
-          i.profile?.latitude != null && i.profile?.longitude != null &&
-          haversineKm(userCoords.latitude, userCoords.longitude, i.profile.latitude, i.profile.longitude) <= distanceFilter
-        );
-      }
-      setInstructors(filtered);
-      setLoading(false);
-      return;
-    }
-    // END DEMO MODE
 
     let query = supabase
       .from('instructor_profiles')

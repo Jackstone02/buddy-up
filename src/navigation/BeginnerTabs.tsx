@@ -42,7 +42,7 @@ export default function BeginnerTabs() {
         initialParams={{ defaultMode: 'instructor', showToggle: false }}
         options={{ title: 'Find' }}
       />
-      <Tab.Screen name="Schedule" component={MyBookingsScreen} options={{ title: 'Schedule' }} />
+      <Tab.Screen name="Schedule" component={MyBookingsScreen} options={{ title: 'My Dives' }} />
       <Tab.Screen name="Messages" component={MessagesListScreen} options={{ title: 'Messages' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
     </Tab.Navigator>

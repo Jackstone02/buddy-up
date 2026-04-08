@@ -16,8 +16,6 @@ import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import CertBadge from '../../components/CertBadge';
 import UserAvatar from '../../components/UserAvatar';
-import { isDemoMode, DEMO_BUDDIES } from '../../lib/mockData'; // DEMO MODE
-
 type Props = NativeStackScreenProps<RootStackParamList, 'BuddyProfile'>;
 
 export default function BuddyProfileScreen({ navigation, route }: Props) {
@@ -32,24 +30,6 @@ export default function BuddyProfileScreen({ navigation, route }: Props) {
   }, [buddyId]);
 
   const fetchBuddy = async () => {
-    // DEMO MODE
-    if (isDemoMode(myProfile?.id)) {
-      const found = DEMO_BUDDIES.find((b) => b.id === buddyId);
-      if (found) {
-        setBuddy({
-          id: found.id,
-          display_name: found.display_name,
-          city_region: found.city_region,
-          bio: found.bio,
-          avatar_url: found.avatar_url,
-          available_to_dive: found.available_to_dive,
-        });
-        setCertProfile(found.certified ?? null);
-      }
-      setLoading(false);
-      return;
-    }
-    // END DEMO MODE
     const [{ data: p }, { data: c }] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', buddyId).single(),
       supabase.from('certified_profiles').select('*').eq('id', buddyId).single(),

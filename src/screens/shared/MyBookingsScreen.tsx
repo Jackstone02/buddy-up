@@ -16,8 +16,6 @@ import { RootStackParamList, BookingStatus } from '../../types';
 import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
-import { isDemoMode, DEMO_CUSTOMER_BOOKINGS } from '../../lib/mockData'; // DEMO MODE
-
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 const TABS: { label: string; statuses: BookingStatus[] }[] = [
@@ -70,15 +68,6 @@ export default function MyBookingsScreen() {
 
   const fetchBookings = async () => {
     if (!profile) return;
-
-    // DEMO MODE
-    if (isDemoMode(profile.id)) {
-      setAllBookings(DEMO_CUSTOMER_BOOKINGS as any[]);
-      setLoading(false);
-      setRefreshing(false);
-      return;
-    }
-    // END DEMO MODE
 
     const { data } = await supabase
       .from('bookings')

@@ -19,7 +19,6 @@ import { RootStackParamList, Discipline } from '../../types';
 import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
-import { isDemoMode } from '../../lib/mockData'; // DEMO MODE
 import AppModal from '../../components/AppModal';
 import { useAppModal } from '../../hooks/useAppModal';
 import UserAvatar from '../../components/UserAvatar';
@@ -66,6 +65,7 @@ export default function ProfileEditScreen({ navigation }: Props) {
   const [certLevel, setCertLevel] = useState(certifiedProfile?.cert_level ?? '');
   const [agency, setAgency] = useState(certifiedProfile?.agency ?? '');
   const [yearsExperience, setYearsExperience] = useState(String(certifiedProfile?.years_experience ?? ''));
+  const [maxDepth, setMaxDepth] = useState(String(certifiedProfile?.max_depth_m ?? ''));
   const [disciplines, setDisciplines] = useState<Discipline[]>(certifiedProfile?.disciplines ?? []);
   const [showCertPicker, setShowCertPicker] = useState(false);
 
@@ -119,13 +119,6 @@ export default function ProfileEditScreen({ navigation }: Props) {
   const pickAndUploadAvatar = async () => {
     if (!profile) return;
 
-    // DEMO MODE
-    if (isDemoMode(profile.id)) {
-      showModal({ type: 'info', title: 'Demo Mode', message: 'Avatar upload is disabled in demo mode.' });
-      return;
-    }
-    // END DEMO MODE
-
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -142,14 +135,14 @@ export default function ProfileEditScreen({ navigation }: Props) {
       const response = await fetch(uri);
       const blob = await response.blob();
 
-      const { error: uploadError } = await supabase.storage.from('buddy-up').upload(path, blob, { upsert: true });
+      const { error: uploadError } = await supabase.storage.from('buddyline').upload(path, blob, { upsert: true });
       if (uploadError) {
         showModal({ type: 'error', title: 'Upload Failed', message: 'Could not upload photo. Please try again.' });
         setAvatarUploading(false);
         return;
       }
 
-      const { data } = supabase.storage.from('buddy-up').getPublicUrl(path);
+      const { data } = supabase.storage.from('buddyline').getPublicUrl(path);
       const newUrl = data.publicUrl;
 
       await supabase.from('profiles').update({ avatar_url: newUrl }).eq('id', profile.id);
@@ -164,13 +157,6 @@ export default function ProfileEditScreen({ navigation }: Props) {
   const handleUploadCredentials = async () => {
     if (!profile) return;
 
-    // DEMO MODE
-    if (isDemoMode(profile.id)) {
-      showModal({ type: 'info', title: 'Demo Mode', message: 'Credential upload is disabled in demo mode.' });
-      return;
-    }
-    // END DEMO MODE
-
     setUploadingCreds(true);
 
     const uploadedUrls: string[] = [];
@@ -179,9 +165,9 @@ export default function ProfileEditScreen({ navigation }: Props) {
         const response = await fetch(uri);
         const blob = await response.blob();
         const path = `credentials/${profile.id}/cred_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error } = await supabase.storage.from('buddy-up').upload(path, blob, { upsert: false });
+        const { error } = await supabase.storage.from('buddyline').upload(path, blob, { upsert: false });
         if (error) continue;
-        const { data } = supabase.storage.from('buddy-up').getPublicUrl(path);
+        const { data } = supabase.storage.from('buddyline').getPublicUrl(path);
         uploadedUrls.push(data.publicUrl);
       } catch {
         // skip failed uploads
@@ -224,32 +210,6 @@ export default function ProfileEditScreen({ navigation }: Props) {
     }
     if (!profile) return;
 
-    // DEMO MODE
-    if (isDemoMode(profile.id)) {
-      setProfile({ ...profile, display_name: displayName.trim(), city_region: cityRegion.trim(), bio: bio.trim() });
-      if (isCertified && certifiedProfile) {
-        setCertifiedProfile({
-          ...certifiedProfile,
-          cert_level: certLevel,
-          agency: agency.trim(),
-          years_experience: parseInt(yearsExperience) || 0,
-          disciplines,
-        });
-      }
-      if (isInstructor && instructorProfile) {
-        setInstructorProfile({
-          ...instructorProfile,
-          teaching_location: cityRegion.trim(),
-          agencies: instructorAgencies.split(',').map((a) => a.trim()).filter(Boolean),
-          certs_offered: certsOffered,
-          years_teaching: parseInt(yearsTeaching) || 0,
-        });
-      }
-      navigation.goBack();
-      return;
-    }
-    // END DEMO MODE
-
     setLoading(true);
 
     const { data: updated, error } = await supabase
@@ -273,6 +233,7 @@ export default function ProfileEditScreen({ navigation }: Props) {
           cert_level: certLevel,
           agency: agency.trim(),
           years_experience: parseInt(yearsExperience) || 0,
+          max_depth_m: parseInt(maxDepth) || null,
           disciplines,
         })
         .select('*')
@@ -417,6 +378,19 @@ export default function ProfileEditScreen({ navigation }: Props) {
                   value={yearsExperience}
                   onChangeText={setYearsExperience}
                   placeholder="0"
+                  placeholderTextColor={Colors.textMuted}
+                  keyboardType="number-pad"
+                />
+              </View>
+
+              <Text style={[styles.label, { marginTop: Spacing.md }]}>Max Depth (m)</Text>
+              <View style={styles.inputWrap}>
+                <Ionicons name="arrow-down-outline" size={18} color={Colors.textMuted} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  value={maxDepth}
+                  onChangeText={setMaxDepth}
+                  placeholder="e.g. 30"
                   placeholderTextColor={Colors.textMuted}
                   keyboardType="number-pad"
                 />

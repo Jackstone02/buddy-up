@@ -9,7 +9,7 @@ import { useAuthStore } from '../../store/authStore';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Splash'>;
 
-const SAFETY_KEY = '@buddyup:safetyAccepted';
+const SAFETY_KEY = '@buddyline:safetyAccepted';
 
 export default function SplashScreen({ navigation }: Props) {
   const { setSession, setProfile, setLoading, setSafetyAccepted } = useAuthStore();
@@ -92,9 +92,9 @@ export default function SplashScreen({ navigation }: Props) {
       <View style={styles.ringInner} />
 
       <View style={styles.logoWrap}>
-        <Text style={styles.logoMain}>Buddy</Text>
-        <View style={styles.logoDivider} />
-        <Text style={styles.logoSub}>UP</Text>
+        <Text style={styles.logoMain}>
+          Buddy<Text style={styles.logoAccent}>line</Text>
+        </Text>
       </View>
 
       <Text style={styles.tagline}>Never Dive Alone</Text>
@@ -143,18 +143,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: 2,
   },
-  logoDivider: {
-    width: 40,
-    height: 2,
-    backgroundColor: Colors.accent,
-    marginVertical: 8,
-    borderRadius: 1,
-  },
-  logoSub: {
-    fontSize: FontSize.md,
-    fontWeight: '700',
+  logoAccent: {
     color: Colors.accent,
-    letterSpacing: 8,
   },
   tagline: {
     fontSize: FontSize.sm,

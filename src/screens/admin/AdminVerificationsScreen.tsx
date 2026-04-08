@@ -6,6 +6,10 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  TextInput,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,8 +18,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types';
 import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
-import { useAuthStore } from '../../store/authStore';
-import { isDemoMode, DEMO_PENDING_VERIFICATIONS } from '../../lib/mockData'; // DEMO MODE
 import AppModal from '../../components/AppModal';
 import { useAppModal } from '../../hooks/useAppModal';
 
@@ -31,28 +33,20 @@ function parseCredentialUrls(raw: string | null | undefined): string[] {
 
 export default function AdminVerificationsScreen() {
   const navigation = useNavigation<Nav>();
-  const { profile } = useAuthStore();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rejectTarget, setRejectTarget] = useState<{ userId: string; name: string } | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
   const { visible, isLoading, config, showModal, handleConfirm, handleCancel } = useAppModal();
 
   useFocusEffect(
     useCallback(() => {
       fetchPending();
-    }, [profile])
+    }, [])
   );
 
   const fetchPending = async () => {
-    if (!profile) return;
     setLoading(true);
-
-    // DEMO MODE
-    if (isDemoMode(profile.id)) {
-      setItems(DEMO_PENDING_VERIFICATIONS);
-      setLoading(false);
-      return;
-    }
-    // END DEMO MODE
 
     // Fetch instructor pending verifications
     const { data: instructorRows } = await supabase
@@ -79,22 +73,36 @@ export default function AdminVerificationsScreen() {
     setLoading(false);
   };
 
-  const handleDecision = async (userId: string, decision: 'verified' | 'rejected') => {
-    // DEMO MODE — just remove from list locally
-    if (isDemoMode(profile?.id)) {
-      setItems((prev) => prev.filter((i) => i.profile?.id !== userId));
-      showModal({
-        type: decision === 'verified' ? 'success' : 'info',
-        title: decision === 'verified' ? 'Approved' : 'Rejected',
-        message: `Demo: ${decision === 'verified' ? 'User verified' : 'User rejected'}.`,
-      });
-      return;
-    }
-    // END DEMO MODE
+  const handleApprove = (userId: string, name: string) => {
+    showModal({
+      type: 'confirm',
+      title: 'Approve User',
+      message: `Verify ${name}? They will appear in search results.`,
+      confirmText: 'Verify',
+      cancelText: 'Cancel',
+      showCancel: true,
+      onConfirm: () => applyDecision(userId, 'verified', null),
+    });
+  };
+
+  const handleReject = (userId: string, name: string) => {
+    setRejectReason('');
+    setRejectTarget({ userId, name });
+  };
+
+  const confirmReject = async () => {
+    if (!rejectTarget) return;
+    await applyDecision(rejectTarget.userId, 'rejected', rejectReason.trim() || null);
+    setRejectTarget(null);
+  };
+
+  const applyDecision = async (userId: string, decision: 'verified' | 'rejected', reason: string | null) => {
+    const update: any = { verification_status: decision };
+    if (decision === 'rejected' && reason) update.rejection_reason = reason;
 
     const { error } = await supabase
       .from('profiles')
-      .update({ verification_status: decision })
+      .update(update)
       .eq('id', userId);
 
     if (error) {
@@ -106,7 +114,9 @@ export default function AdminVerificationsScreen() {
     showModal({
       type: decision === 'verified' ? 'success' : 'info',
       title: decision === 'verified' ? 'Approved' : 'Rejected',
-      message: decision === 'verified' ? 'User is now verified and will appear in search.' : 'User has been rejected.',
+      message: decision === 'verified'
+        ? 'User is now verified and will appear in search.'
+        : 'User has been rejected and notified.',
     });
   };
 
@@ -183,34 +193,14 @@ export default function AdminVerificationsScreen() {
         <View style={styles.actions}>
           <TouchableOpacity
             style={[styles.actionBtn, styles.rejectBtn]}
-            onPress={() =>
-              showModal({
-                type: 'confirm',
-                title: 'Reject User',
-                message: `Reject ${p?.display_name}?`,
-                confirmText: 'Reject',
-                cancelText: 'Cancel',
-                showCancel: true,
-                onConfirm: () => handleDecision(p?.id, 'rejected'),
-              })
-            }
+            onPress={() => handleReject(p?.id, p?.display_name ?? 'this user')}
           >
             <Ionicons name="close-circle-outline" size={18} color={Colors.error} />
             <Text style={[styles.actionBtnText, { color: Colors.error }]}>Reject</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionBtn, styles.approveBtn]}
-            onPress={() =>
-              showModal({
-                type: 'confirm',
-                title: 'Approve User',
-                message: `Verify ${p?.display_name}?`,
-                confirmText: 'Verify',
-                cancelText: 'Cancel',
-                showCancel: true,
-                onConfirm: () => handleDecision(p?.id, 'verified'),
-              })
-            }
+            onPress={() => handleApprove(p?.id, p?.display_name ?? 'this user')}
           >
             <Ionicons name="checkmark-circle-outline" size={18} color="#fff" />
             <Text style={[styles.actionBtnText, { color: '#fff' }]}>Approve</Text>
@@ -253,6 +243,45 @@ export default function AdminVerificationsScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      {/* Rejection reason modal */}
+      <Modal
+        visible={!!rejectTarget}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRejectTarget(null)}
+      >
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+          <View style={styles.rejectModal}>
+            <Text style={styles.rejectModalTitle}>Reject {rejectTarget?.name}</Text>
+            <Text style={styles.rejectModalSub}>Optionally provide a reason (shown to the user):</Text>
+            <TextInput
+              style={styles.rejectInput}
+              value={rejectReason}
+              onChangeText={setRejectReason}
+              placeholder="e.g. Credentials unclear, please resubmit"
+              placeholderTextColor={Colors.textMuted}
+              multiline
+              numberOfLines={3}
+              autoFocus
+            />
+            <View style={styles.rejectModalActions}>
+              <TouchableOpacity
+                style={styles.rejectModalCancel}
+                onPress={() => setRejectTarget(null)}
+              >
+                <Text style={styles.rejectModalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.rejectModalConfirm}
+                onPress={confirmReject}
+              >
+                <Text style={styles.rejectModalConfirmText}>Confirm Rejection</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       <AppModal
         visible={visible}
@@ -375,4 +404,49 @@ const styles = StyleSheet.create({
   },
   emptyTitle: { fontSize: FontSize.xl, fontWeight: '800', color: Colors.text },
   emptySub: { fontSize: FontSize.sm, color: Colors.textSecondary },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.lg,
+  },
+  rejectModal: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.xl,
+    padding: Spacing.xl,
+    width: '100%',
+    gap: Spacing.md,
+  },
+  rejectModalTitle: { fontSize: FontSize.lg, fontWeight: '800', color: Colors.text },
+  rejectModalSub: { fontSize: FontSize.sm, color: Colors.textSecondary },
+  rejectInput: {
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.background,
+    padding: Spacing.md,
+    fontSize: FontSize.sm,
+    color: Colors.text,
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  rejectModalActions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.xs },
+  rejectModalCancel: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    alignItems: 'center',
+  },
+  rejectModalCancelText: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.textSecondary },
+  rejectModalConfirm: {
+    flex: 2,
+    paddingVertical: 12,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.error,
+    alignItems: 'center',
+  },
+  rejectModalConfirmText: { fontSize: FontSize.sm, fontWeight: '700', color: '#fff' },
 });

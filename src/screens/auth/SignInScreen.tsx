@@ -25,7 +25,7 @@ import { useAppModal } from '../../hooks/useAppModal';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SignIn'>;
 
-const SAFETY_KEY = '@buddyup:safetyAccepted';
+const SAFETY_KEY = '@buddyline:safetyAccepted';
 
 export default function SignInScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
@@ -177,7 +177,7 @@ export default function SignInScreen({ navigation }: Props) {
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Welcome back</Text>
-          <Text style={styles.headerSub}>Sign in to continue diving safely</Text>
+          <Text style={styles.headerSub}>Never dive alone.</Text>
         </View>
       </SafeAreaView>
 

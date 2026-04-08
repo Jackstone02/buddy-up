@@ -1,4 +1,4 @@
-# Buddy Up 🤿
+# Buddyline 🤿
 
 > **Never Dive Alone** — A safety-focused freediving community app for connecting certified divers and finding qualified instructors.
 
@@ -11,13 +11,13 @@
 
 ## About
 
-Buddy Up is a mobile app that puts safety first for the freediving community. It connects:
+Buddyline is a mobile app that puts safety first for the freediving community. It connects:
 
 - **Certified freedivers** with verified dive buddies — so no one dives alone
 - **All divers** with verified instructors — for training, guidance, and coaching
 - **Instructors** with prospective students — via a dedicated, verified profile
 
-> ⚠️ Buddy Up connects people only — it does not supervise dives. Always dive within your training limits.
+> ⚠️ Buddyline connects people only — it does not supervise dives. Always dive within your training limits.
 
 ---
 
@@ -79,7 +79,7 @@ Buddy Up is a mobile app that puts safety first for the freediving community. It
 ## Project Structure
 
 ```
-buddy-up/
+buddyline/
 ├── App.tsx                         # Entry point + deep link handling
 ├── app.config.js                   # Expo config (name, slug, scheme)
 ├── src/
@@ -129,8 +129,8 @@ buddy-up/
 
 ```bash
 # Clone the repo
-git clone https://github.com/jackstone02/buddy-up.git
-cd buddy-up
+git clone https://github.com/jackstone02/buddyline.git
+cd buddyline
 
 # Install dependencies
 npm install
@@ -172,34 +172,34 @@ Run `schema.sql` in your Supabase SQL editor to create all tables, indexes, RLS 
 
 ### Required Configuration
 
-1. **Exposed Schemas** — In Supabase → Settings → API → Exposed Schemas, add `buddy_up`
-2. **Auth Redirect URLs** — Add `https://jackstone02.github.io/buddy-up/email-confirmation` as an allowed redirect URL
-3. **Site URL** — Set to `https://jackstone02.github.io/buddy-up/email-confirmation`
+1. **Exposed Schemas** — In Supabase → Settings → API → Exposed Schemas, add `buddyline`
+2. **Auth Redirect URLs** — Add `https://jackstone02.github.io/buddyline/email-confirmation` as an allowed redirect URL
+3. **Site URL** — Set to `https://jackstone02.github.io/buddyline/email-confirmation`
 4. **Storage Buckets** — Create: `avatars`, `cert-cards`, `credentials`
 
 ### Tables
 
 | Table | Purpose |
 |---|---|
-| `buddy_up.profiles` | Core user profiles (all roles) |
-| `buddy_up.certified_profiles` | Extra data for certified divers |
-| `buddy_up.instructor_profiles` | Extra data for instructors |
-| `buddy_up.dive_requests` | Dive request bookings between certified divers |
-| `buddy_up.messages` | 1-on-1 direct messages |
-| `buddy_up.reports` | User safety reports |
-| `buddy_up.blocks` | User block relationships |
+| `buddyline.profiles` | Core user profiles (all roles) |
+| `buddyline.certified_profiles` | Extra data for certified divers |
+| `buddyline.instructor_profiles` | Extra data for instructors |
+| `buddyline.dive_requests` | Dive request bookings between certified divers |
+| `buddyline.messages` | 1-on-1 direct messages |
+| `buddyline.reports` | User safety reports |
+| `buddyline.blocks` | User block relationships |
 
 ---
 
 ## Deep Linking
 
-The app uses the `buddyup://` URL scheme for deep links.
+The app uses the `buddyline://` URL scheme for deep links.
 
 | Deep Link | Purpose |
 |---|---|
-| `buddyup://` | Open app home |
-| `buddyup://email-confirmed?accessToken=...` | Post email confirmation |
-| `buddyup://reset-password?accessToken=...&refreshToken=...` | Password reset |
+| `buddyline://` | Open app home |
+| `buddyline://email-confirmed?accessToken=...` | Post email confirmation |
+| `buddyline://reset-password?accessToken=...&refreshToken=...` | Password reset |
 
 GitHub Pages bridges (`email-confirmation.html`, `password-reset.html`) extract tokens from Supabase redirect URLs and forward them to the app via deep links.
 
@@ -218,10 +218,10 @@ Unverified certified/instructor users see the `VerificationPending` screen until
 
 ## Safety Policy
 
-Buddy Up enforces a strict safety-first policy:
+Buddyline enforces a strict safety-first policy:
 
 - Users must be 18+ (confirmed at signup, stored as `age_confirmed`)
-- A mandatory safety acknowledgement screen must be accepted before accessing any features (stored in AsyncStorage as `@buddyup:safetyAccepted`)
+- A mandatory safety acknowledgement screen must be accepted before accessing any features (stored in AsyncStorage as `@buddyline:safetyAccepted`)
 - Every message thread displays a safety reminder banner
 - All discovery screens include a footer: "This app connects people only — it does not supervise dives"
 - Users can report or block other users at any time
@@ -231,13 +231,13 @@ Buddy Up enforces a strict safety-first policy:
 ## Troubleshooting
 
 ### "Email not confirmed" error on sign in
-Email confirmation is required. Check your email for the confirmation link. Ensure the Supabase Site URL and Redirect URLs point to `https://jackstone02.github.io/buddy-up/email-confirmation`.
+Email confirmation is required. Check your email for the confirmation link. Ensure the Supabase Site URL and Redirect URLs point to `https://jackstone02.github.io/buddyline/email-confirmation`.
 
 ### App routes to wrong screen after signup
-Check that `buddy_up` is listed in Supabase → Settings → API → Exposed Schemas. Without this, profile queries fail silently and the app falls back to onboarding.
+Check that `buddyline` is listed in Supabase → Settings → API → Exposed Schemas. Without this, profile queries fail silently and the app falls back to onboarding.
 
 ### Deep links not working
-Ensure `buddyup` scheme is registered in `app.config.js` under `scheme`. On iOS, also check the associated domains configuration.
+Ensure `buddyline` scheme is registered in `app.config.js` under `scheme`. On iOS, also check the associated domains configuration.
 
 ### Supabase FK alias error on dive requests
 Use explicit FK aliases when querying multiple joins to the same table:
@@ -259,4 +259,4 @@ Private — all rights reserved.
 
 ---
 
-*Buddy Up — Never Dive Alone*
+*Buddyline — Never Dive Alone*

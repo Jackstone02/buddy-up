@@ -17,8 +17,6 @@ import { Colors, Spacing, FontSize, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import SafetyBanner from '../../components/SafetyBanner';
-import { isDemoMode, getDemoMessages } from '../../lib/mockData'; // DEMO MODE
-
 type Props = NativeStackScreenProps<RootStackParamList, 'Messaging'>;
 
 export default function MessagingScreen({ navigation, route }: Props) {
@@ -31,17 +29,13 @@ export default function MessagingScreen({ navigation, route }: Props) {
   useEffect(() => {
     fetchMessages();
 
-    // DEMO MODE — skip realtime subscription for demo accounts
-    if (isDemoMode(profile?.id) || isDemoMode(otherUserId)) return;
-    // END DEMO MODE
-
     const channel = supabase
       .channel('messaging')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
-          schema: 'public',
+          schema: 'buddyline',
           table: 'messages',
           filter: `receiver_id=eq.${profile?.id}`,
         },
@@ -59,13 +53,6 @@ export default function MessagingScreen({ navigation, route }: Props) {
 
   const fetchMessages = async () => {
     if (!profile) return;
-
-    // DEMO MODE — use local mock messages
-    if (isDemoMode(profile.id) || isDemoMode(otherUserId)) {
-      setMessages(getDemoMessages(profile.id, otherUserId) as Message[]);
-      return;
-    }
-    // END DEMO MODE
 
     const { data } = await supabase
       .from('messages')
@@ -91,23 +78,7 @@ export default function MessagingScreen({ navigation, route }: Props) {
     const content = input.trim();
     setInput('');
 
-    // DEMO MODE — append locally, no Supabase insert
-    if (isDemoMode(profile.id) || isDemoMode(otherUserId)) {
-      const demoMsg: Message = {
-        id: `demo-sent-${Date.now()}`,
-        sender_id: profile.id,
-        receiver_id: otherUserId,
-        content,
-        is_read: false,
-        created_at: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, demoMsg]);
-      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 50);
-      return;
-    }
-    // END DEMO MODE
-
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('messages')
       .insert({
         sender_id: profile.id,
@@ -117,6 +88,11 @@ export default function MessagingScreen({ navigation, route }: Props) {
       })
       .select('*')
       .single();
+
+    if (error) {
+      setInput(content);
+      return;
+    }
 
     if (data) {
       setMessages((prev) => [...prev, data]);
@@ -144,7 +120,7 @@ export default function MessagingScreen({ navigation, route }: Props) {
             </View>
             <View style={styles.headerInfo}>
               <Text style={styles.headerName}>{otherUserName}</Text>
-              <Text style={styles.headerSub}>Buddy Up</Text>
+              <Text style={styles.headerSub}>Buddyline</Text>
             </View>
             <TouchableOpacity
               style={styles.reportBtn}

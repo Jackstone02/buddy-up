@@ -14,7 +14,6 @@ import { RootStackParamList, UserRole } from '../../types';
 import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
-import { isDemoMode } from '../../lib/mockData'; // DEMO MODE
 import AppModal from '../../components/AppModal';
 import { useAppModal } from '../../hooks/useAppModal';
 
@@ -92,19 +91,6 @@ export default function RoleChangeScreen({ navigation }: Props) {
   const applyRoleChange = async (newRole: UserRole) => {
     setSaving(true);
 
-    // DEMO MODE — just update local state
-    if (isDemoMode(profile?.id)) {
-      setProfile({ ...profile!, role: newRole, verification_status: 'none' });
-      setSaving(false);
-      if (newRole === 'beginner') {
-        navigation.replace('BeginnerTabs');
-      } else {
-        navigation.replace('ProfileSetup', { role: newRole });
-      }
-      return;
-    }
-    // END DEMO MODE
-
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); return; }
 
@@ -119,6 +105,13 @@ export default function RoleChangeScreen({ navigation }: Props) {
       showModal({ type: 'error', title: 'Error', message: 'Could not update role. Please try again.' });
       setSaving(false);
       return;
+    }
+
+    // Delete old role-specific data only after the role update succeeds
+    if (currentRole === 'certified') {
+      await supabase.from('certified_profiles').delete().eq('id', user.id);
+    } else if (currentRole === 'instructor') {
+      await supabase.from('instructor_profiles').delete().eq('id', user.id);
     }
 
     setProfile(updatedProfile);

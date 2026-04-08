@@ -101,7 +101,7 @@ export default function ResetPasswordScreen({ route, navigation }: Props) {
           </View>
 
           <Text style={styles.desc}>
-            Enter a new password for your Buddy Up account. Use at least 6 characters.
+            Enter a new password for your Buddyline account. Use at least 6 characters.
           </Text>
 
           <Text style={styles.label}>New password</Text>

@@ -1,6 +1,6 @@
 -- ============================================================
--- Buddy Up — Supabase Schema
--- Schema: buddy_up
+-- Buddyline — Supabase Schema
+-- Schema: buddyline
 --
 -- HOW TO RUN:
 -- 1. Paste entire file into Supabase SQL Editor and run.
@@ -11,17 +11,17 @@
 -- SCHEMA SETUP
 -- ============================================================
 
-create schema if not exists buddy_up;
+create schema if not exists buddyline;
 
 -- Grant access to Supabase built-in roles
-grant usage on schema buddy_up to anon, authenticated, service_role;
+grant usage on schema buddyline to anon, authenticated, service_role;
 
 -- Auto-grant permissions on any future tables created in this schema
-alter default privileges in schema buddy_up
+alter default privileges in schema buddyline
   grant all on tables to authenticated, service_role;
-alter default privileges in schema buddy_up
+alter default privileges in schema buddyline
   grant select on tables to anon;
-alter default privileges in schema buddy_up
+alter default privileges in schema buddyline
   grant all on sequences to authenticated, service_role;
 
 -- Enable UUID generation
@@ -33,7 +33,7 @@ create extension if not exists "pgcrypto";
 
 -- ─── profiles ───────────────────────────────────────────────
 -- Extends auth.users. Auto-created via trigger on signup.
-create table if not exists buddy_up.profiles (
+create table if not exists buddyline.profiles (
   id                  uuid primary key references auth.users on delete cascade,
   role                text check (role in ('beginner','certified','instructor','admin')),
   display_name        text,
@@ -54,12 +54,12 @@ create table if not exists buddy_up.profiles (
 );
 
 -- Auto-create stub profile row whenever a user registers
-create or replace function buddy_up.handle_new_user()
+create or replace function buddyline.handle_new_user()
 returns trigger language plpgsql security definer
-set search_path = buddy_up
+set search_path = buddyline
 as $$
 begin
-  insert into buddy_up.profiles (id)
+  insert into buddyline.profiles (id)
   values (new.id)
   on conflict (id) do nothing;
   return new;
@@ -69,11 +69,11 @@ $$;
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
-  for each row execute procedure buddy_up.handle_new_user();
+  for each row execute procedure buddyline.handle_new_user();
 
 -- ─── certified_profiles ─────────────────────────────────────
-create table if not exists buddy_up.certified_profiles (
-  id                uuid primary key references buddy_up.profiles on delete cascade,
+create table if not exists buddyline.certified_profiles (
+  id                uuid primary key references buddyline.profiles on delete cascade,
   cert_level        text,
   agency            text,
   years_experience  int default 0,
@@ -82,8 +82,8 @@ create table if not exists buddy_up.certified_profiles (
 );
 
 -- ─── instructor_profiles ────────────────────────────────────
-create table if not exists buddy_up.instructor_profiles (
-  id                uuid primary key references buddy_up.profiles on delete cascade,
+create table if not exists buddyline.instructor_profiles (
+  id                uuid primary key references buddyline.profiles on delete cascade,
   teaching_location text,
   agencies          text[] default '{}',
   certs_offered     text[] default '{}',
@@ -92,9 +92,9 @@ create table if not exists buddy_up.instructor_profiles (
 );
 
 -- ─── lesson_types ───────────────────────────────────────────
-create table if not exists buddy_up.lesson_types (
+create table if not exists buddyline.lesson_types (
   id                uuid primary key default gen_random_uuid(),
-  instructor_id     uuid references buddy_up.profiles on delete cascade,
+  instructor_id     uuid references buddyline.profiles on delete cascade,
   name              text not null,
   duration_minutes  int default 60,
   skill_level       text default 'beginner'
@@ -106,9 +106,9 @@ create table if not exists buddy_up.lesson_types (
 );
 
 -- ─── availability_slots ──────────────────────────────────────
-create table if not exists buddy_up.availability_slots (
+create table if not exists buddyline.availability_slots (
   id            uuid primary key default gen_random_uuid(),
-  instructor_id uuid references buddy_up.profiles on delete cascade,
+  instructor_id uuid references buddyline.profiles on delete cascade,
   slot_date     date not null,
   start_time    time not null,
   end_time      time not null,
@@ -116,12 +116,12 @@ create table if not exists buddy_up.availability_slots (
 );
 
 -- ─── bookings ────────────────────────────────────────────────
-create table if not exists buddy_up.bookings (
+create table if not exists buddyline.bookings (
   id                   uuid primary key default gen_random_uuid(),
-  customer_id          uuid references buddy_up.profiles on delete cascade,
-  instructor_id        uuid references buddy_up.profiles on delete cascade,
-  lesson_type_id       uuid references buddy_up.lesson_types on delete set null,
-  availability_slot_id uuid references buddy_up.availability_slots on delete set null,
+  customer_id          uuid references buddyline.profiles on delete cascade,
+  instructor_id        uuid references buddyline.profiles on delete cascade,
+  lesson_type_id       uuid references buddyline.lesson_types on delete set null,
+  availability_slot_id uuid references buddyline.availability_slots on delete set null,
   booking_date         date not null,
   start_time           time not null,
   participants_count   int default 1,
@@ -137,30 +137,48 @@ create table if not exists buddy_up.bookings (
 );
 
 -- ─── messages ───────────────────────────────────────────────
-create table if not exists buddy_up.messages (
+create table if not exists buddyline.messages (
   id          uuid primary key default gen_random_uuid(),
-  sender_id   uuid references buddy_up.profiles on delete cascade,
-  receiver_id uuid references buddy_up.profiles on delete cascade,
+  sender_id   uuid references buddyline.profiles on delete cascade,
+  receiver_id uuid references buddyline.profiles on delete cascade,
   content     text not null,
   is_read     boolean default false,
   created_at  timestamptz default now()
 );
 
 -- ─── reports ────────────────────────────────────────────────
-create table if not exists buddy_up.reports (
+create table if not exists buddyline.reports (
   id           uuid primary key default gen_random_uuid(),
-  reporter_id  uuid references buddy_up.profiles on delete cascade,
-  reported_id  uuid references buddy_up.profiles on delete cascade,
+  reporter_id  uuid references buddyline.profiles on delete cascade,
+  reported_id  uuid references buddyline.profiles on delete cascade,
   reason       text,
   details      text,
   status       text default 'open' check (status in ('open','resolved')),
   created_at   timestamptz default now()
 );
 
+-- ─── push_tokens ─────────────────────────────────────────────
+-- One row per user+device — supports multiple devices per account.
+create table if not exists buddyline.push_tokens (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid references buddyline.profiles on delete cascade,
+  token       text not null,
+  device_id   text not null,
+  platform    text check (platform in ('ios', 'android', 'web')),
+  created_at  timestamptz default now(),
+  updated_at  timestamptz default now(),
+  unique (user_id, device_id)
+);
+alter table buddyline.push_tokens enable row level security;
+create policy "push_tokens: own only"
+  on buddyline.push_tokens for all to authenticated
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create index if not exists idx_push_tokens_user on buddyline.push_tokens(user_id);
+
 -- ─── blocks ─────────────────────────────────────────────────
-create table if not exists buddy_up.blocks (
-  blocker_id  uuid references buddy_up.profiles on delete cascade,
-  blocked_id  uuid references buddy_up.profiles on delete cascade,
+create table if not exists buddyline.blocks (
+  blocker_id  uuid references buddyline.profiles on delete cascade,
+  blocked_id  uuid references buddyline.profiles on delete cascade,
   created_at  timestamptz default now(),
   primary key (blocker_id, blocked_id)
 );
@@ -171,10 +189,10 @@ create table if not exists buddy_up.blocks (
 
 -- ─── dive_requests ───────────────────────────────────────────
 -- Buddy dive requests between certified divers.
-create table if not exists buddy_up.dive_requests (
+create table if not exists buddyline.dive_requests (
   id              uuid primary key default gen_random_uuid(),
-  requester_id    uuid references buddy_up.profiles on delete cascade,
-  buddy_id        uuid references buddy_up.profiles on delete cascade,
+  requester_id    uuid references buddyline.profiles on delete cascade,
+  buddy_id        uuid references buddyline.profiles on delete cascade,
   requested_date  date not null,
   location_name   text not null,
   disciplines     text[] default '{}',
@@ -184,35 +202,35 @@ create table if not exists buddy_up.dive_requests (
   created_at      timestamptz default now()
 );
 
-create index if not exists idx_dive_requests_requester on buddy_up.dive_requests(requester_id, created_at desc);
-create index if not exists idx_dive_requests_buddy     on buddy_up.dive_requests(buddy_id, created_at desc);
+create index if not exists idx_dive_requests_requester on buddyline.dive_requests(requester_id, created_at desc);
+create index if not exists idx_dive_requests_buddy     on buddyline.dive_requests(buddy_id, created_at desc);
 
-alter table buddy_up.dive_requests enable row level security;
+alter table buddyline.dive_requests enable row level security;
 
-drop policy if exists "dive_requests: read own"            on buddy_up.dive_requests;
-drop policy if exists "dive_requests: insert as requester" on buddy_up.dive_requests;
-drop policy if exists "dive_requests: update own"          on buddy_up.dive_requests;
+drop policy if exists "dive_requests: read own"            on buddyline.dive_requests;
+drop policy if exists "dive_requests: insert as requester" on buddyline.dive_requests;
+drop policy if exists "dive_requests: update own"          on buddyline.dive_requests;
 
 create policy "dive_requests: read own"
-  on buddy_up.dive_requests for select
+  on buddyline.dive_requests for select
   to authenticated
   using (auth.uid() = requester_id or auth.uid() = buddy_id);
 
 create policy "dive_requests: insert as requester"
-  on buddy_up.dive_requests for insert
+  on buddyline.dive_requests for insert
   to authenticated
   with check (auth.uid() = requester_id);
 
 create policy "dive_requests: update own"
-  on buddy_up.dive_requests for update
+  on buddyline.dive_requests for update
   to authenticated
   using (auth.uid() = requester_id or auth.uid() = buddy_id);
 
 -- ─── dive_logs ───────────────────────────────────────────────
-create table if not exists buddy_up.dive_logs (
+create table if not exists buddyline.dive_logs (
   id             uuid primary key default gen_random_uuid(),
-  diver_id       uuid references buddy_up.profiles on delete cascade,
-  buddy_id       uuid references buddy_up.profiles on delete set null,
+  diver_id       uuid references buddyline.profiles on delete cascade,
+  buddy_id       uuid references buddyline.profiles on delete set null,
   log_date       date not null,
   location_name  text,
   latitude       double precision,
@@ -226,9 +244,9 @@ create table if not exists buddy_up.dive_logs (
 
 -- ─── sos_sessions ────────────────────────────────────────────
 -- Live location share during a dive. Realtime-enabled.
-create table if not exists buddy_up.sos_sessions (
+create table if not exists buddyline.sos_sessions (
   id          uuid primary key default gen_random_uuid(),
-  diver_id    uuid references buddy_up.profiles on delete cascade,
+  diver_id    uuid references buddyline.profiles on delete cascade,
   latitude    double precision,
   longitude   double precision,
   is_active   boolean default true,
@@ -237,16 +255,16 @@ create table if not exists buddy_up.sos_sessions (
   notes       text
 );
 
-create table if not exists buddy_up.sos_watchers (
-  sos_session_id  uuid references buddy_up.sos_sessions on delete cascade,
-  watcher_id      uuid references buddy_up.profiles on delete cascade,
+create table if not exists buddyline.sos_watchers (
+  sos_session_id  uuid references buddyline.sos_sessions on delete cascade,
+  watcher_id      uuid references buddyline.profiles on delete cascade,
   primary key (sos_session_id, watcher_id)
 );
 
 -- ─── group_dives ─────────────────────────────────────────────
-create table if not exists buddy_up.group_dives (
+create table if not exists buddyline.group_dives (
   id               uuid primary key default gen_random_uuid(),
-  organizer_id     uuid references buddy_up.profiles on delete cascade,
+  organizer_id     uuid references buddyline.profiles on delete cascade,
   title            text not null,
   description      text,
   location_name    text,
@@ -259,9 +277,9 @@ create table if not exists buddy_up.group_dives (
   created_at       timestamptz default now()
 );
 
-create table if not exists buddy_up.group_dive_members (
-  group_dive_id  uuid references buddy_up.group_dives on delete cascade,
-  user_id        uuid references buddy_up.profiles on delete cascade,
+create table if not exists buddyline.group_dive_members (
+  group_dive_id  uuid references buddyline.group_dives on delete cascade,
+  user_id        uuid references buddyline.profiles on delete cascade,
   status         text default 'invited'
                  check (status in ('invited','confirmed','declined')),
   joined_at      timestamptz default now(),
@@ -270,11 +288,11 @@ create table if not exists buddy_up.group_dive_members (
 
 -- ─── ratings ─────────────────────────────────────────────────
 -- Tied to a booking — one rating per booking, prevents fabrication.
-create table if not exists buddy_up.ratings (
+create table if not exists buddyline.ratings (
   id           uuid primary key default gen_random_uuid(),
-  reviewer_id  uuid references buddy_up.profiles on delete cascade,
-  reviewed_id  uuid references buddy_up.profiles on delete cascade,
-  booking_id   uuid references buddy_up.bookings on delete set null,
+  reviewer_id  uuid references buddyline.profiles on delete cascade,
+  reviewed_id  uuid references buddyline.profiles on delete cascade,
+  booking_id   uuid references buddyline.bookings on delete set null,
   score        smallint not null check (score between 1 and 5),
   comment      text,
   created_at   timestamptz default now(),
@@ -283,7 +301,7 @@ create table if not exists buddy_up.ratings (
 
 -- ─── dive_shops ──────────────────────────────────────────────
 -- Admin-populated physical dive shop locator. Write via service_role only.
-create table if not exists buddy_up.dive_shops (
+create table if not exists buddyline.dive_shops (
   id           uuid primary key default gen_random_uuid(),
   name         text not null,
   address      text,
@@ -300,9 +318,9 @@ create table if not exists buddy_up.dive_shops (
 
 -- ─── marketplace_shops ───────────────────────────────────────
 -- Any user can open one seller shop (unique per user).
-create table if not exists buddy_up.marketplace_shops (
+create table if not exists buddyline.marketplace_shops (
   id         uuid primary key default gen_random_uuid(),
-  owner_id   uuid references buddy_up.profiles on delete cascade unique,
+  owner_id   uuid references buddyline.profiles on delete cascade unique,
   shop_name  text not null,
   bio        text,
   logo_url   text,
@@ -314,10 +332,10 @@ create table if not exists buddy_up.marketplace_shops (
 -- ─── marketplace_listings ────────────────────────────────────
 -- price_cents = integer cents (e.g. 2500 = $25.00, avoids float rounding).
 -- image_urls = array of Supabase Storage URLs.
-create table if not exists buddy_up.marketplace_listings (
+create table if not exists buddyline.marketplace_listings (
   id           uuid primary key default gen_random_uuid(),
-  shop_id      uuid references buddy_up.marketplace_shops on delete cascade,
-  seller_id    uuid references buddy_up.profiles on delete cascade,
+  shop_id      uuid references buddyline.marketplace_shops on delete cascade,
+  seller_id    uuid references buddyline.profiles on delete cascade,
   title        text not null,
   description  text,
   category     text check (category in (
@@ -337,11 +355,11 @@ create table if not exists buddy_up.marketplace_listings (
 
 -- ─── marketplace_orders ──────────────────────────────────────
 -- payment_intent_id wired to Stripe in V2.
-create table if not exists buddy_up.marketplace_orders (
+create table if not exists buddyline.marketplace_orders (
   id                uuid primary key default gen_random_uuid(),
-  listing_id        uuid references buddy_up.marketplace_listings on delete set null,
-  buyer_id          uuid references buddy_up.profiles on delete cascade,
-  seller_id         uuid references buddy_up.profiles on delete cascade,
+  listing_id        uuid references buddyline.marketplace_listings on delete set null,
+  buyer_id          uuid references buddyline.profiles on delete cascade,
+  seller_id         uuid references buddyline.profiles on delete cascade,
   quantity          int default 1,
   total_cents       int not null,
   currency          text default 'USD',
@@ -357,11 +375,11 @@ create table if not exists buddy_up.marketplace_orders (
 
 -- ─── marketplace_reviews ─────────────────────────────────────
 -- unique(order_id) = one review per completed order, no spam.
-create table if not exists buddy_up.marketplace_reviews (
+create table if not exists buddyline.marketplace_reviews (
   id           uuid primary key default gen_random_uuid(),
-  order_id     uuid references buddy_up.marketplace_orders on delete cascade unique,
-  reviewer_id  uuid references buddy_up.profiles on delete cascade,
-  seller_id    uuid references buddy_up.profiles on delete cascade,
+  order_id     uuid references buddyline.marketplace_orders on delete cascade unique,
+  reviewer_id  uuid references buddyline.profiles on delete cascade,
+  seller_id    uuid references buddyline.profiles on delete cascade,
   score        smallint not null check (score between 1 and 5),
   comment      text,
   created_at   timestamptz default now()
@@ -376,9 +394,9 @@ do $$ begin
   if not exists (
     select 1 from pg_publication_tables
     where pubname = 'supabase_realtime'
-      and schemaname = 'buddy_up' and tablename = 'messages'
+      and schemaname = 'buddyline' and tablename = 'messages'
   ) then
-    alter publication supabase_realtime add table buddy_up.messages;
+    alter publication supabase_realtime add table buddyline.messages;
   end if;
 end $$;
 
@@ -386,9 +404,9 @@ do $$ begin
   if not exists (
     select 1 from pg_publication_tables
     where pubname = 'supabase_realtime'
-      and schemaname = 'buddy_up' and tablename = 'bookings'
+      and schemaname = 'buddyline' and tablename = 'bookings'
   ) then
-    alter publication supabase_realtime add table buddy_up.bookings;
+    alter publication supabase_realtime add table buddyline.bookings;
   end if;
 end $$;
 
@@ -396,9 +414,9 @@ do $$ begin
   if not exists (
     select 1 from pg_publication_tables
     where pubname = 'supabase_realtime'
-      and schemaname = 'buddy_up' and tablename = 'sos_sessions'
+      and schemaname = 'buddyline' and tablename = 'sos_sessions'
   ) then
-    alter publication supabase_realtime add table buddy_up.sos_sessions;
+    alter publication supabase_realtime add table buddyline.sos_sessions;
   end if;
 end $$;
 
@@ -408,349 +426,349 @@ end $$;
 -- ============================================================
 
 -- ─── profiles ───────────────────────────────────────────────
-alter table buddy_up.profiles enable row level security;
+alter table buddyline.profiles enable row level security;
 
-drop policy if exists "profiles: read by authenticated"  on buddy_up.profiles;
-drop policy if exists "profiles: insert own"             on buddy_up.profiles;
-drop policy if exists "profiles: write own row"          on buddy_up.profiles;
+drop policy if exists "profiles: read by authenticated"  on buddyline.profiles;
+drop policy if exists "profiles: insert own"             on buddyline.profiles;
+drop policy if exists "profiles: write own row"          on buddyline.profiles;
 
 create policy "profiles: read by authenticated"
-  on buddy_up.profiles for select
+  on buddyline.profiles for select
   to authenticated using (true);
 
 -- Needed for OAuth edge cases where trigger fires after app upsert
 create policy "profiles: insert own"
-  on buddy_up.profiles for insert
+  on buddyline.profiles for insert
   to authenticated
   with check (auth.uid() = id);
 
 create policy "profiles: write own row"
-  on buddy_up.profiles for update
+  on buddyline.profiles for update
   to authenticated
   using (auth.uid() = id)
   with check (auth.uid() = id);
 
 -- ─── certified_profiles ─────────────────────────────────────
-alter table buddy_up.certified_profiles enable row level security;
+alter table buddyline.certified_profiles enable row level security;
 
-drop policy if exists "certified_profiles: read by authenticated" on buddy_up.certified_profiles;
-drop policy if exists "certified_profiles: write own row"         on buddy_up.certified_profiles;
+drop policy if exists "certified_profiles: read by authenticated" on buddyline.certified_profiles;
+drop policy if exists "certified_profiles: write own row"         on buddyline.certified_profiles;
 
 create policy "certified_profiles: read by authenticated"
-  on buddy_up.certified_profiles for select
+  on buddyline.certified_profiles for select
   to authenticated using (true);
 
 create policy "certified_profiles: write own row"
-  on buddy_up.certified_profiles for all
+  on buddyline.certified_profiles for all
   to authenticated
   using (auth.uid() = id)
   with check (auth.uid() = id);
 
 -- ─── instructor_profiles ────────────────────────────────────
-alter table buddy_up.instructor_profiles enable row level security;
+alter table buddyline.instructor_profiles enable row level security;
 
-drop policy if exists "instructor_profiles: read by authenticated" on buddy_up.instructor_profiles;
-drop policy if exists "instructor_profiles: write own row"         on buddy_up.instructor_profiles;
+drop policy if exists "instructor_profiles: read by authenticated" on buddyline.instructor_profiles;
+drop policy if exists "instructor_profiles: write own row"         on buddyline.instructor_profiles;
 
 create policy "instructor_profiles: read by authenticated"
-  on buddy_up.instructor_profiles for select
+  on buddyline.instructor_profiles for select
   to authenticated using (true);
 
 create policy "instructor_profiles: write own row"
-  on buddy_up.instructor_profiles for all
+  on buddyline.instructor_profiles for all
   to authenticated
   using (auth.uid() = id)
   with check (auth.uid() = id);
 
 -- ─── messages ───────────────────────────────────────────────
-alter table buddy_up.messages enable row level security;
+alter table buddyline.messages enable row level security;
 
-drop policy if exists "messages: read own"           on buddy_up.messages;
-drop policy if exists "messages: insert as sender"   on buddy_up.messages;
-drop policy if exists "messages: update own received" on buddy_up.messages;
+drop policy if exists "messages: read own"           on buddyline.messages;
+drop policy if exists "messages: insert as sender"   on buddyline.messages;
+drop policy if exists "messages: update own received" on buddyline.messages;
 
 create policy "messages: read own"
-  on buddy_up.messages for select
+  on buddyline.messages for select
   to authenticated
   using (auth.uid() = sender_id or auth.uid() = receiver_id);
 
 create policy "messages: insert as sender"
-  on buddy_up.messages for insert
+  on buddyline.messages for insert
   to authenticated
   with check (auth.uid() = sender_id);
 
 create policy "messages: update own received"
-  on buddy_up.messages for update
+  on buddyline.messages for update
   to authenticated
   using (auth.uid() = receiver_id);
 
 -- ─── reports ────────────────────────────────────────────────
-alter table buddy_up.reports enable row level security;
+alter table buddyline.reports enable row level security;
 
-drop policy if exists "reports: insert by authenticated" on buddy_up.reports;
+drop policy if exists "reports: insert by authenticated" on buddyline.reports;
 
 create policy "reports: insert by authenticated"
-  on buddy_up.reports for insert
+  on buddyline.reports for insert
   to authenticated
   with check (auth.uid() = reporter_id);
 
 -- ─── blocks ─────────────────────────────────────────────────
-alter table buddy_up.blocks enable row level security;
+alter table buddyline.blocks enable row level security;
 
-drop policy if exists "blocks: manage own" on buddy_up.blocks;
+drop policy if exists "blocks: manage own" on buddyline.blocks;
 
 create policy "blocks: manage own"
-  on buddy_up.blocks for all
+  on buddyline.blocks for all
   to authenticated
   using (auth.uid() = blocker_id)
   with check (auth.uid() = blocker_id);
 
 -- ─── lesson_types ───────────────────────────────────────────
-alter table buddy_up.lesson_types enable row level security;
+alter table buddyline.lesson_types enable row level security;
 
-drop policy if exists "lesson_types: read by authenticated" on buddy_up.lesson_types;
-drop policy if exists "lesson_types: write own"             on buddy_up.lesson_types;
+drop policy if exists "lesson_types: read by authenticated" on buddyline.lesson_types;
+drop policy if exists "lesson_types: write own"             on buddyline.lesson_types;
 
 create policy "lesson_types: read by authenticated"
-  on buddy_up.lesson_types for select
+  on buddyline.lesson_types for select
   to authenticated using (true);
 
 create policy "lesson_types: write own"
-  on buddy_up.lesson_types for all
+  on buddyline.lesson_types for all
   to authenticated
   using (auth.uid() = instructor_id)
   with check (auth.uid() = instructor_id);
 
 -- ─── availability_slots ──────────────────────────────────────
-alter table buddy_up.availability_slots enable row level security;
+alter table buddyline.availability_slots enable row level security;
 
-drop policy if exists "availability_slots: read by authenticated" on buddy_up.availability_slots;
-drop policy if exists "availability_slots: write own"             on buddy_up.availability_slots;
+drop policy if exists "availability_slots: read by authenticated" on buddyline.availability_slots;
+drop policy if exists "availability_slots: write own"             on buddyline.availability_slots;
 
 create policy "availability_slots: read by authenticated"
-  on buddy_up.availability_slots for select
+  on buddyline.availability_slots for select
   to authenticated using (true);
 
 create policy "availability_slots: write own"
-  on buddy_up.availability_slots for all
+  on buddyline.availability_slots for all
   to authenticated
   using (auth.uid() = instructor_id)
   with check (auth.uid() = instructor_id);
 
 -- ─── bookings ────────────────────────────────────────────────
-alter table buddy_up.bookings enable row level security;
+alter table buddyline.bookings enable row level security;
 
-drop policy if exists "bookings: read own"        on buddy_up.bookings;
-drop policy if exists "bookings: insert as customer" on buddy_up.bookings;
-drop policy if exists "bookings: update own"      on buddy_up.bookings;
+drop policy if exists "bookings: read own"        on buddyline.bookings;
+drop policy if exists "bookings: insert as customer" on buddyline.bookings;
+drop policy if exists "bookings: update own"      on buddyline.bookings;
 
 create policy "bookings: read own"
-  on buddy_up.bookings for select
+  on buddyline.bookings for select
   to authenticated
   using (auth.uid() = customer_id or auth.uid() = instructor_id);
 
 create policy "bookings: insert as customer"
-  on buddy_up.bookings for insert
+  on buddyline.bookings for insert
   to authenticated
   with check (auth.uid() = customer_id);
 
 create policy "bookings: update own"
-  on buddy_up.bookings for update
+  on buddyline.bookings for update
   to authenticated
   using (auth.uid() = customer_id or auth.uid() = instructor_id);
 
 -- ─── dive_logs ───────────────────────────────────────────────
-alter table buddy_up.dive_logs enable row level security;
+alter table buddyline.dive_logs enable row level security;
 
-drop policy if exists "dive_logs: own only" on buddy_up.dive_logs;
+drop policy if exists "dive_logs: own only" on buddyline.dive_logs;
 
 create policy "dive_logs: own only"
-  on buddy_up.dive_logs for all
+  on buddyline.dive_logs for all
   to authenticated
   using (auth.uid() = diver_id)
   with check (auth.uid() = diver_id);
 
 -- ─── sos_sessions ────────────────────────────────────────────
-alter table buddy_up.sos_sessions enable row level security;
+alter table buddyline.sos_sessions enable row level security;
 
-drop policy if exists "sos_sessions: own or watcher" on buddy_up.sos_sessions;
-drop policy if exists "sos_sessions: insert own"     on buddy_up.sos_sessions;
-drop policy if exists "sos_sessions: update own"     on buddy_up.sos_sessions;
+drop policy if exists "sos_sessions: own or watcher" on buddyline.sos_sessions;
+drop policy if exists "sos_sessions: insert own"     on buddyline.sos_sessions;
+drop policy if exists "sos_sessions: update own"     on buddyline.sos_sessions;
 
 create policy "sos_sessions: own or watcher"
-  on buddy_up.sos_sessions for select
+  on buddyline.sos_sessions for select
   to authenticated
   using (
     auth.uid() = diver_id or
     exists (
-      select 1 from buddy_up.sos_watchers w
+      select 1 from buddyline.sos_watchers w
       where w.sos_session_id = id and w.watcher_id = auth.uid()
     )
   );
 
 create policy "sos_sessions: insert own"
-  on buddy_up.sos_sessions for insert
+  on buddyline.sos_sessions for insert
   to authenticated
   with check (auth.uid() = diver_id);
 
 create policy "sos_sessions: update own"
-  on buddy_up.sos_sessions for update
+  on buddyline.sos_sessions for update
   to authenticated
   using (auth.uid() = diver_id);
 
 -- ─── sos_watchers ────────────────────────────────────────────
-alter table buddy_up.sos_watchers enable row level security;
+alter table buddyline.sos_watchers enable row level security;
 
-drop policy if exists "sos_watchers: diver manages"  on buddy_up.sos_watchers;
-drop policy if exists "sos_watchers: watcher reads own" on buddy_up.sos_watchers;
+drop policy if exists "sos_watchers: diver manages"  on buddyline.sos_watchers;
+drop policy if exists "sos_watchers: watcher reads own" on buddyline.sos_watchers;
 
 create policy "sos_watchers: diver manages"
-  on buddy_up.sos_watchers for all
+  on buddyline.sos_watchers for all
   to authenticated
   using (
     exists (
-      select 1 from buddy_up.sos_sessions s
+      select 1 from buddyline.sos_sessions s
       where s.id = sos_session_id and s.diver_id = auth.uid()
     )
   );
 
 create policy "sos_watchers: watcher reads own"
-  on buddy_up.sos_watchers for select
+  on buddyline.sos_watchers for select
   to authenticated
   using (auth.uid() = watcher_id);
 
 -- ─── group_dives ─────────────────────────────────────────────
-alter table buddy_up.group_dives enable row level security;
+alter table buddyline.group_dives enable row level security;
 
-drop policy if exists "group_dives: read all authenticated" on buddy_up.group_dives;
-drop policy if exists "group_dives: write own"              on buddy_up.group_dives;
+drop policy if exists "group_dives: read all authenticated" on buddyline.group_dives;
+drop policy if exists "group_dives: write own"              on buddyline.group_dives;
 
 create policy "group_dives: read all authenticated"
-  on buddy_up.group_dives for select
+  on buddyline.group_dives for select
   to authenticated using (true);
 
 create policy "group_dives: write own"
-  on buddy_up.group_dives for all
+  on buddyline.group_dives for all
   to authenticated
   using (auth.uid() = organizer_id)
   with check (auth.uid() = organizer_id);
 
 -- ─── group_dive_members ──────────────────────────────────────
-alter table buddy_up.group_dive_members enable row level security;
+alter table buddyline.group_dive_members enable row level security;
 
-drop policy if exists "group_dive_members: read own or organizer" on buddy_up.group_dive_members;
-drop policy if exists "group_dive_members: write own"             on buddy_up.group_dive_members;
+drop policy if exists "group_dive_members: read own or organizer" on buddyline.group_dive_members;
+drop policy if exists "group_dive_members: write own"             on buddyline.group_dive_members;
 
 create policy "group_dive_members: read own or organizer"
-  on buddy_up.group_dive_members for select
+  on buddyline.group_dive_members for select
   to authenticated
   using (
     auth.uid() = user_id or
     exists (
-      select 1 from buddy_up.group_dives g
+      select 1 from buddyline.group_dives g
       where g.id = group_dive_id and g.organizer_id = auth.uid()
     )
   );
 
 create policy "group_dive_members: write own"
-  on buddy_up.group_dive_members for all
+  on buddyline.group_dive_members for all
   to authenticated
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
 -- ─── ratings ─────────────────────────────────────────────────
-alter table buddy_up.ratings enable row level security;
+alter table buddyline.ratings enable row level security;
 
-drop policy if exists "ratings: read all authenticated" on buddy_up.ratings;
-drop policy if exists "ratings: insert own"             on buddy_up.ratings;
+drop policy if exists "ratings: read all authenticated" on buddyline.ratings;
+drop policy if exists "ratings: insert own"             on buddyline.ratings;
 
 create policy "ratings: read all authenticated"
-  on buddy_up.ratings for select
+  on buddyline.ratings for select
   to authenticated using (true);
 
 create policy "ratings: insert own"
-  on buddy_up.ratings for insert
+  on buddyline.ratings for insert
   to authenticated
   with check (auth.uid() = reviewer_id);
 
 -- ─── dive_shops ──────────────────────────────────────────────
 -- Write access via service_role only (admin populates via Supabase dashboard).
-alter table buddy_up.dive_shops enable row level security;
+alter table buddyline.dive_shops enable row level security;
 
-drop policy if exists "dive_shops: read all authenticated" on buddy_up.dive_shops;
+drop policy if exists "dive_shops: read all authenticated" on buddyline.dive_shops;
 
 create policy "dive_shops: read all authenticated"
-  on buddy_up.dive_shops for select
+  on buddyline.dive_shops for select
   to authenticated using (true);
 
 -- ─── marketplace_shops ───────────────────────────────────────
-alter table buddy_up.marketplace_shops enable row level security;
+alter table buddyline.marketplace_shops enable row level security;
 
-drop policy if exists "marketplace_shops: read active" on buddy_up.marketplace_shops;
-drop policy if exists "marketplace_shops: write own"   on buddy_up.marketplace_shops;
+drop policy if exists "marketplace_shops: read active" on buddyline.marketplace_shops;
+drop policy if exists "marketplace_shops: write own"   on buddyline.marketplace_shops;
 
 create policy "marketplace_shops: read active"
-  on buddy_up.marketplace_shops for select
+  on buddyline.marketplace_shops for select
   to authenticated
   using (is_active = true);
 
 create policy "marketplace_shops: write own"
-  on buddy_up.marketplace_shops for all
+  on buddyline.marketplace_shops for all
   to authenticated
   using (auth.uid() = owner_id)
   with check (auth.uid() = owner_id);
 
 -- ─── marketplace_listings ────────────────────────────────────
-alter table buddy_up.marketplace_listings enable row level security;
+alter table buddyline.marketplace_listings enable row level security;
 
-drop policy if exists "marketplace_listings: read active or own" on buddy_up.marketplace_listings;
-drop policy if exists "marketplace_listings: write own"          on buddy_up.marketplace_listings;
+drop policy if exists "marketplace_listings: read active or own" on buddyline.marketplace_listings;
+drop policy if exists "marketplace_listings: write own"          on buddyline.marketplace_listings;
 
 create policy "marketplace_listings: read active or own"
-  on buddy_up.marketplace_listings for select
+  on buddyline.marketplace_listings for select
   to authenticated
   using (status = 'active' or auth.uid() = seller_id);
 
 create policy "marketplace_listings: write own"
-  on buddy_up.marketplace_listings for all
+  on buddyline.marketplace_listings for all
   to authenticated
   using (auth.uid() = seller_id)
   with check (auth.uid() = seller_id);
 
 -- ─── marketplace_orders ──────────────────────────────────────
-alter table buddy_up.marketplace_orders enable row level security;
+alter table buddyline.marketplace_orders enable row level security;
 
-drop policy if exists "marketplace_orders: read buyer or seller"  on buddy_up.marketplace_orders;
-drop policy if exists "marketplace_orders: insert as buyer"       on buddy_up.marketplace_orders;
-drop policy if exists "marketplace_orders: update buyer or seller" on buddy_up.marketplace_orders;
+drop policy if exists "marketplace_orders: read buyer or seller"  on buddyline.marketplace_orders;
+drop policy if exists "marketplace_orders: insert as buyer"       on buddyline.marketplace_orders;
+drop policy if exists "marketplace_orders: update buyer or seller" on buddyline.marketplace_orders;
 
 create policy "marketplace_orders: read buyer or seller"
-  on buddy_up.marketplace_orders for select
+  on buddyline.marketplace_orders for select
   to authenticated
   using (auth.uid() = buyer_id or auth.uid() = seller_id);
 
 create policy "marketplace_orders: insert as buyer"
-  on buddy_up.marketplace_orders for insert
+  on buddyline.marketplace_orders for insert
   to authenticated
   with check (auth.uid() = buyer_id);
 
 create policy "marketplace_orders: update buyer or seller"
-  on buddy_up.marketplace_orders for update
+  on buddyline.marketplace_orders for update
   to authenticated
   using (auth.uid() = buyer_id or auth.uid() = seller_id);
 
 -- ─── marketplace_reviews ─────────────────────────────────────
-alter table buddy_up.marketplace_reviews enable row level security;
+alter table buddyline.marketplace_reviews enable row level security;
 
-drop policy if exists "marketplace_reviews: read all authenticated" on buddy_up.marketplace_reviews;
-drop policy if exists "marketplace_reviews: insert own"             on buddy_up.marketplace_reviews;
+drop policy if exists "marketplace_reviews: read all authenticated" on buddyline.marketplace_reviews;
+drop policy if exists "marketplace_reviews: insert own"             on buddyline.marketplace_reviews;
 
 create policy "marketplace_reviews: read all authenticated"
-  on buddy_up.marketplace_reviews for select
+  on buddyline.marketplace_reviews for select
   to authenticated using (true);
 
 create policy "marketplace_reviews: insert own"
-  on buddy_up.marketplace_reviews for insert
+  on buddyline.marketplace_reviews for insert
   to authenticated
   with check (auth.uid() = reviewer_id);
 
@@ -759,17 +777,17 @@ create policy "marketplace_reviews: insert own"
 -- Uncomment and run separately if not configuring via Dashboard.
 -- ============================================================
 -- insert into storage.buckets (id, name, public) values
---   ('buddy-up', 'buddy-up', true)
+--   ('buddyline', 'buddyline', true)
 -- on conflict do nothing;
 --
--- Folder structure inside the 'buddy-up' bucket:
+-- Folder structure inside the 'buddyline' bucket:
 --   avatars/         → profile photos        (path: avatars/{user_id})
 --   certs/           → cert card uploads     (path: certs/{user_id})
 --   credentials/     → instructor credentials (path: credentials/{user_id})
 --   marketplace/     → listing photos        (path: marketplace/{user_id}/{listing_id})
 --   shop-logos/      → shop logos            (path: shop-logos/{user_id})
 --
--- Storage RLS: set in Dashboard > Storage > buddy-up > Policies
+-- Storage RLS: set in Dashboard > Storage > buddyline > Policies
 -- Rule: authenticated users can upload only to paths starting with their user ID.
 
 -- ============================================================
@@ -777,41 +795,150 @@ create policy "marketplace_reviews: insert own"
 -- ============================================================
 
 -- profiles
-create index if not exists idx_profiles_role         on buddy_up.profiles(role);
-create index if not exists idx_profiles_verification  on buddy_up.profiles(verification_status);
-create index if not exists idx_profiles_city          on buddy_up.profiles(city_region);
-create index if not exists idx_profiles_available     on buddy_up.profiles(available_to_dive) where available_to_dive = true;
-create index if not exists idx_profiles_location      on buddy_up.profiles(latitude, longitude) where latitude is not null;
+create index if not exists idx_profiles_role         on buddyline.profiles(role);
+create index if not exists idx_profiles_verification  on buddyline.profiles(verification_status);
+create index if not exists idx_profiles_city          on buddyline.profiles(city_region);
+create index if not exists idx_profiles_available     on buddyline.profiles(available_to_dive) where available_to_dive = true;
+create index if not exists idx_profiles_location      on buddyline.profiles(latitude, longitude) where latitude is not null;
 
 -- messages
-create index if not exists idx_messages_receiver      on buddy_up.messages(receiver_id, created_at desc);
-create index if not exists idx_messages_sender        on buddy_up.messages(sender_id, created_at desc);
+create index if not exists idx_messages_receiver      on buddyline.messages(receiver_id, created_at desc);
+create index if not exists idx_messages_sender        on buddyline.messages(sender_id, created_at desc);
 
 -- lesson_types / slots / bookings
-create index if not exists idx_lesson_types_instructor on buddy_up.lesson_types(instructor_id);
-create index if not exists idx_slots_instructor_date   on buddy_up.availability_slots(instructor_id, slot_date);
-create index if not exists idx_bookings_customer       on buddy_up.bookings(customer_id, booking_date);
-create index if not exists idx_bookings_instructor     on buddy_up.bookings(instructor_id, booking_date);
+create index if not exists idx_lesson_types_instructor on buddyline.lesson_types(instructor_id);
+create index if not exists idx_slots_instructor_date   on buddyline.availability_slots(instructor_id, slot_date);
+create index if not exists idx_bookings_customer       on buddyline.bookings(customer_id, booking_date);
+create index if not exists idx_bookings_instructor     on buddyline.bookings(instructor_id, booking_date);
 
 -- dive_logs
-create index if not exists idx_dive_logs_diver         on buddy_up.dive_logs(diver_id, log_date desc);
+create index if not exists idx_dive_logs_diver         on buddyline.dive_logs(diver_id, log_date desc);
 
 -- group_dives
-create index if not exists idx_group_dives_organizer   on buddy_up.group_dives(organizer_id);
-create index if not exists idx_group_dives_scheduled   on buddy_up.group_dives(scheduled_at) where status = 'open';
+create index if not exists idx_group_dives_organizer   on buddyline.group_dives(organizer_id);
+create index if not exists idx_group_dives_scheduled   on buddyline.group_dives(scheduled_at) where status = 'open';
 
 -- ratings
-create index if not exists idx_ratings_reviewed        on buddy_up.ratings(reviewed_id);
-create index if not exists idx_ratings_booking         on buddy_up.ratings(booking_id);
+create index if not exists idx_ratings_reviewed        on buddyline.ratings(reviewed_id);
+create index if not exists idx_ratings_booking         on buddyline.ratings(booking_id);
 
 -- dive_shops
-create index if not exists idx_dive_shops_location     on buddy_up.dive_shops(latitude, longitude) where latitude is not null;
-create index if not exists idx_dive_shops_city         on buddy_up.dive_shops(city);
+create index if not exists idx_dive_shops_location     on buddyline.dive_shops(latitude, longitude) where latitude is not null;
+create index if not exists idx_dive_shops_city         on buddyline.dive_shops(city);
 
 -- marketplace
-create index if not exists idx_listings_seller         on buddy_up.marketplace_listings(seller_id);
-create index if not exists idx_listings_category       on buddy_up.marketplace_listings(category) where status = 'active';
-create index if not exists idx_listings_status         on buddy_up.marketplace_listings(status);
-create index if not exists idx_orders_buyer            on buddy_up.marketplace_orders(buyer_id, created_at desc);
-create index if not exists idx_orders_seller           on buddy_up.marketplace_orders(seller_id, created_at desc);
-create index if not exists idx_mkt_reviews_seller      on buddy_up.marketplace_reviews(seller_id);
+create index if not exists idx_listings_seller         on buddyline.marketplace_listings(seller_id);
+create index if not exists idx_listings_category       on buddyline.marketplace_listings(category) where status = 'active';
+create index if not exists idx_listings_status         on buddyline.marketplace_listings(status);
+create index if not exists idx_orders_buyer            on buddyline.marketplace_orders(buyer_id, created_at desc);
+create index if not exists idx_orders_seller           on buddyline.marketplace_orders(seller_id, created_at desc);
+create index if not exists idx_mkt_reviews_seller      on buddyline.marketplace_reviews(seller_id);
+
+-- ============================================================
+-- SCHEMA ADDITIONS — V1 UPDATES
+-- ============================================================
+
+-- ─── max_depth_m on certified_profiles ──────────────────────
+alter table buddyline.certified_profiles
+  add column if not exists max_depth_m int;
+
+-- ─── rejection_reason on profiles ───────────────────────────
+-- Set by admin when verification is rejected; shown to user on VerificationPendingScreen
+alter table buddyline.profiles
+  add column if not exists rejection_reason text;
+
+-- ─── completed status on dive_requests ──────────────────────
+-- Enables post-dive rating trigger (V2)
+alter table buddyline.dive_requests
+  drop constraint if exists dive_requests_status_check;
+alter table buddyline.dive_requests
+  add constraint dive_requests_status_check
+  check (status in ('pending','accepted','declined','cancelled','completed'));
+
+-- ============================================================
+-- DIVE SESSIONS — Open join model (replaces person-to-person requests)
+-- ============================================================
+
+create table if not exists buddyline.dive_sessions (
+  id             uuid primary key default gen_random_uuid(),
+  creator_id     uuid references buddyline.profiles on delete cascade,
+  location_name  text not null,
+  latitude       double precision,
+  longitude      double precision,
+  scheduled_at   timestamptz not null,
+  max_depth_m    int,
+  dive_type      text check (dive_type in ('line_training','fun_dive','spearfishing','pool','dynamic','static','other')),
+  spots_needed   int default 1,
+  notes          text,
+  status         text default 'open' check (status in ('open','full','cancelled','completed')),
+  created_at     timestamptz default now()
+);
+
+create table if not exists buddyline.dive_session_members (
+  session_id  uuid references buddyline.dive_sessions on delete cascade,
+  user_id     uuid references buddyline.profiles on delete cascade,
+  joined_at   timestamptz default now(),
+  primary key (session_id, user_id)
+);
+
+alter table buddyline.dive_sessions enable row level security;
+alter table buddyline.dive_session_members enable row level security;
+
+drop policy if exists "dive_sessions: read open or own" on buddyline.dive_sessions;
+drop policy if exists "dive_sessions: insert own"       on buddyline.dive_sessions;
+drop policy if exists "dive_sessions: update own"       on buddyline.dive_sessions;
+
+create policy "dive_sessions: read open or own"
+  on buddyline.dive_sessions for select to authenticated
+  using (status = 'open' or auth.uid() = creator_id);
+
+create policy "dive_sessions: insert own"
+  on buddyline.dive_sessions for insert to authenticated
+  with check (auth.uid() = creator_id);
+
+create policy "dive_sessions: update own"
+  on buddyline.dive_sessions for update to authenticated
+  using (auth.uid() = creator_id);
+
+drop policy if exists "dive_session_members: read"       on buddyline.dive_session_members;
+drop policy if exists "dive_session_members: write own"  on buddyline.dive_session_members;
+
+create policy "dive_session_members: read"
+  on buddyline.dive_session_members for select to authenticated
+  using (
+    auth.uid() = user_id or
+    exists (select 1 from buddyline.dive_sessions s where s.id = session_id and s.creator_id = auth.uid())
+  );
+
+create policy "dive_session_members: write own"
+  on buddyline.dive_session_members for all to authenticated
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Realtime for session updates
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'buddyline' and tablename = 'dive_sessions'
+  ) then
+    alter publication supabase_realtime add table buddyline.dive_sessions;
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'buddyline' and tablename = 'dive_session_members'
+  ) then
+    alter publication supabase_realtime add table buddyline.dive_session_members;
+  end if;
+end $$;
+
+-- Indexes
+create index if not exists idx_dive_sessions_creator    on buddyline.dive_sessions(creator_id);
+create index if not exists idx_dive_sessions_scheduled  on buddyline.dive_sessions(scheduled_at) where status = 'open';
+create index if not exists idx_dive_sessions_location   on buddyline.dive_sessions(latitude, longitude) where latitude is not null;
+create index if not exists idx_dive_session_members_user on buddyline.dive_session_members(user_id);

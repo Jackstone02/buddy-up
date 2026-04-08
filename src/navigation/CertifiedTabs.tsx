@@ -45,7 +45,7 @@ export default function CertifiedTabs() {
         initialParams={{ defaultMode: 'instructor', showToggle: true }}
         options={{ title: 'Find' }}
       />
-      <Tab.Screen name="Schedule" component={MyActivityScreen} options={{ title: 'Schedule' }} />
+      <Tab.Screen name="Schedule" component={MyActivityScreen} options={{ title: 'My Dives' }} />
       <Tab.Screen name="Messages" component={MessagesListScreen} options={{ title: 'Messages' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
     </Tab.Navigator>

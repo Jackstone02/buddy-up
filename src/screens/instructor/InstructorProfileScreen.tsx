@@ -16,8 +16,6 @@ import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import CertBadge from '../../components/CertBadge';
 import UserAvatar from '../../components/UserAvatar';
-import { isDemoMode, DEMO_LESSON_TYPES, DEMO_INSTRUCTORS, DEMO_IDS } from '../../lib/mockData'; // DEMO MODE
-
 type Props = NativeStackScreenProps<RootStackParamList, 'InstructorProfile'>;
 
 export default function InstructorProfileScreen({ navigation, route }: Props) {
@@ -32,18 +30,6 @@ export default function InstructorProfileScreen({ navigation, route }: Props) {
   }, [instructorId]);
 
   const fetchInstructor = async () => {
-    // DEMO MODE
-    if (isDemoMode(myProfile?.id)) {
-      const found = DEMO_INSTRUCTORS.find((i) => i.id === instructorId);
-      if (found) {
-        setInstructor(found);
-        setLessonTypes(DEMO_LESSON_TYPES.filter((l) => l.instructor_id === instructorId));
-      }
-      setLoading(false);
-      return;
-    }
-    // END DEMO MODE
-
     const [{ data: instrData }, { data: ltData }] = await Promise.all([
       supabase
         .from('instructor_profiles')
@@ -195,7 +181,7 @@ export default function InstructorProfileScreen({ navigation, route }: Props) {
         {/* Disclaimer */}
         <View style={styles.disclaimer}>
           <Text style={styles.disclaimerText}>
-            This app connects people only. Buddy Up does not supervise dives or guarantee instructor availability.
+            This app connects people only. Buddyline does not supervise dives or guarantee instructor availability.
           </Text>
         </View>
       </ScrollView>

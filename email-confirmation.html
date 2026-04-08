@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Email Confirmed — Buddy Up</title>
+  <title>Email Confirmed — Buddyline</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -69,7 +69,7 @@
 </head>
 <body>
   <div class="card">
-    <div class="logo">Buddy Up</div>
+    <div class="logo">Buddyline</div>
     <div class="logo-divider"></div>
 
     <!-- Success state -->
@@ -80,9 +80,9 @@
       <h1>Email Confirmed!</h1>
       <p>Your email address has been verified. You're all set to dive in.</p>
       <p>Open the app to complete your profile setup.</p>
-      <a href="buddyup://" class="btn">Open Buddy Up App</a>
+      <a href="buddyline://" class="btn">Open Buddyline App</a>
       <br />
-      <a href="https://jackstone02.github.io/buddy-up" class="btn-secondary">Back to Website</a>
+      <a href="https://jackstone02.github.io/buddyline" class="btn-secondary">Back to Website</a>
     </div>
 
     <!-- Error state -->
@@ -93,12 +93,12 @@
       <h1>Link Expired</h1>
       <p>This confirmation link has expired or is invalid.</p>
       <p>Please sign in to the app and request a new confirmation email.</p>
-      <a href="buddyup://" class="btn">Open Buddy Up App</a>
+      <a href="buddyline://" class="btn">Open Buddyline App</a>
       <br />
-      <a href="https://jackstone02.github.io/buddy-up" class="btn-secondary">Back to Website</a>
+      <a href="https://jackstone02.github.io/buddyline" class="btn-secondary">Back to Website</a>
     </div>
 
-    <div class="footer">Never Dive Alone &nbsp;•&nbsp; Buddy Up</div>
+    <div class="footer">Never Dive Alone &nbsp;•&nbsp; Buddyline</div>
   </div>
 
   <script>
@@ -120,7 +120,7 @@
       const accessToken  = hash.get('access_token')  || params.get('access_token');
       const refreshToken = hash.get('refresh_token') || params.get('refresh_token');
 
-      let deepLink = 'buddyup://email-confirmed';
+      let deepLink = 'buddyline://email-confirmed';
       if (accessToken)  deepLink += '?accessToken='  + encodeURIComponent(accessToken);
       if (refreshToken) deepLink += (accessToken ? '&' : '?') + 'refreshToken=' + encodeURIComponent(refreshToken);
 

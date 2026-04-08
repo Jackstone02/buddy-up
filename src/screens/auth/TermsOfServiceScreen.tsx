@@ -21,8 +21,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'TermsOfService'>;
 
 const SECTIONS = [
   {
-    title: '1. About Buddy Up',
-    body: 'Buddy Up ("the App") is a connection platform that helps certified freedivers find dive buddies, and helps uncertified divers find certified instructors. The App facilitates introductions only. It does not monitor, supervise, or participate in any dive activity.',
+    title: '1. About Buddyline',
+    body: 'Buddyline ("the App") is a connection platform that helps certified freedivers find dive buddies, and helps uncertified divers find certified instructors. The App facilitates introductions only. It does not monitor, supervise, or participate in any dive activity.',
   },
   {
     title: '2. Age Requirement',
@@ -30,11 +30,11 @@ const SECTIONS = [
   },
   {
     title: '3. Connection-Only Platform',
-    body: 'Buddy Up is a connection service only. We do not organise, supervise, or take responsibility for any dive sessions, training, or activities arranged between users. Any arrangement made between users is entirely at their own discretion and risk.',
+    body: 'Buddyline is a connection service only. We do not organise, supervise, or take responsibility for any dive sessions, training, or activities arranged between users. Any arrangement made between users is entirely at their own discretion and risk.',
   },
   {
     title: '4. No Liability',
-    body: 'Freediving carries serious inherent risks, including blackout, injury, and death. By using this App you acknowledge these risks and accept full personal responsibility for your safety and the safety choices you make. To the maximum extent permitted by law, Buddy Up and its developers accept no liability for any injury, loss, death, or damage arising from use of the App or from dive activities arranged through it.',
+    body: 'Freediving carries serious inherent risks, including blackout, injury, and death. By using this App you acknowledge these risks and accept full personal responsibility for your safety and the safety choices you make. To the maximum extent permitted by law, Buddyline and its developers accept no liability for any injury, loss, death, or damage arising from use of the App or from dive activities arranged through it.',
   },
   {
     title: '5. Emergency Protocol',
@@ -42,7 +42,7 @@ const SECTIONS = [
   },
   {
     title: '6. Verification',
-    body: 'Certified diver and instructor profiles require credential verification before full access is granted. Buddy Up reviews submitted documents manually. Approval does not guarantee the accuracy of certifications claimed by users. Always verify a buddy or instructor\'s qualifications independently before diving with them.',
+    body: 'Certified diver and instructor profiles require credential verification before full access is granted. Buddyline reviews submitted documents manually. Approval does not guarantee the accuracy of certifications claimed by users. Always verify a buddy or instructor\'s qualifications independently before diving with them.',
   },
   {
     title: '7. User Conduct',
@@ -115,7 +115,7 @@ export default function TermsOfServiceScreen({ navigation, route }: Props) {
         <Text style={styles.headerTitle}>Terms of Service</Text>
         <Text style={styles.headerSub}>
           {isViewOnly
-            ? 'Last updated March 2026'
+            ? `Last updated ${new Date().toLocaleDateString('en', { month: 'long', year: 'numeric' })}`
             : 'Please read carefully and scroll to the bottom to accept.'}
         </Text>
       </SafeAreaView>
@@ -137,7 +137,7 @@ export default function TermsOfServiceScreen({ navigation, route }: Props) {
         <View style={styles.disclaimerBox}>
           <Ionicons name="warning-outline" size={16} color={Colors.warning} style={{ marginBottom: 6 }} />
           <Text style={styles.disclaimerText}>
-            By accepting, you acknowledge that freediving carries serious risks and that you are solely responsible for your own safety. Buddy Up is a connection service only and accepts no liability for dive-related incidents.
+            By accepting, you acknowledge that freediving carries serious risks and that you are solely responsible for your own safety. Buddyline is a connection service only and accepts no liability for dive-related incidents.
           </Text>
         </View>
 

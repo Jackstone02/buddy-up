@@ -4,7 +4,7 @@ import { supabase } from './supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const REDIRECT_URI = 'com.buddyup.app://auth/callback';
+const REDIRECT_URI = 'com.buddyline.app://auth/callback';
 
 export async function signInWithGoogle(): Promise<{ data: any; error: any }> {
   try {

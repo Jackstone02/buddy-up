@@ -12,6 +12,6 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     detectSessionInUrl: false,
   },
   db: {
-    schema: 'buddy_up',
+    schema: 'buddyline',
   },
 });

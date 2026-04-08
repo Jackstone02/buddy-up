@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Buddy Up - Find your freediving buddy. Connect with certified freedivers and instructors near you. Never dive alone.">
+    <meta name="description" content="Buddyline - Find your freediving buddy. Connect with certified freedivers and instructors near you. Never dive alone.">
     <meta name="keywords" content="freediving, buddy matching, freediving instructor, dive buddy, freediving app">
-    <title>Buddy Up - Never Dive Alone</title>
+    <title>Buddyline - Never Dive Alone</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -424,14 +424,14 @@
     <section class="safety-banner">
         <div class="container">
             <h2>⚠️ Safety First</h2>
-            <p>Buddy Up connects people — it does not supervise dives. Always meet at a supervised dive site. Never freedive alone. Freediving can be dangerous without proper training and supervision.</p>
+            <p>Buddyline connects people — it does not supervise dives. Always meet at a supervised dive site. Never freedive alone. Freediving can be dangerous without proper training and supervision.</p>
         </div>
     </section>
 
     <section class="cta">
         <div class="container">
             <h2>Ready to Find Your Buddy?</h2>
-            <p>Join the Buddy Up community and never dive alone again.</p>
+            <p>Join the Buddyline community and never dive alone again.</p>
             <button class="btn btn-primary" onclick="openApp()" style="font-size: 17px; padding: 18px 40px;">
                 📱 Get Started Now
             </button>
@@ -441,7 +441,7 @@
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-section">
-                <h4>Buddy Up</h4>
+                <h4>Buddyline</h4>
                 <p>The freediving buddy matching app. Connect with certified divers and instructors near you.</p>
             </div>
             <div class="footer-section">
@@ -462,23 +462,23 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2026 Buddy Up. All rights reserved.</p>
+            <p>&copy; 2026 Buddyline. All rights reserved.</p>
         </div>
     </footer>
 
     <script>
         function openApp() {
-            window.location.href = 'buddyup://';
+            window.location.href = 'buddyline://';
             setTimeout(function() {
                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
                 const isAndroid = /Android/.test(navigator.userAgent);
                 if (isIOS) {
-                    if (confirm('App not installed? Download Buddy Up from the App Store?')) {
-                        window.location.href = 'https://apps.apple.com/app/buddy-up';
+                    if (confirm('App not installed? Download Buddyline from the App Store?')) {
+                        window.location.href = 'https://apps.apple.com/app/buddyline';
                     }
                 } else if (isAndroid) {
-                    if (confirm('App not installed? Download Buddy Up from the Play Store?')) {
-                        window.location.href = 'https://play.google.com/store/apps/details?id=com.buddyup.app';
+                    if (confirm('App not installed? Download Buddyline from the Play Store?')) {
+                        window.location.href = 'https://play.google.com/store/apps/details?id=com.buddyline.app';
                     }
                 }
             }, 2000);

@@ -175,7 +175,7 @@ export default function SignUpScreen({ navigation }: Props) {
         </View>
         <Text style={styles.stepLabel}>Step 1 of 3</Text>
         <Text style={styles.headerTitle}>Create Account</Text>
-        <Text style={styles.headerSub}>Join the freediving safety community</Text>
+        <Text style={styles.headerSub}>Never dive alone.</Text>
       </SafeAreaView>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>

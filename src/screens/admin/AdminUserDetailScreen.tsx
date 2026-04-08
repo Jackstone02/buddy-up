@@ -15,7 +15,6 @@ import { RootStackParamList } from '../../types';
 import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
-import { isDemoMode, DEMO_ALL_USERS, DEMO_PENDING_VERIFICATIONS } from '../../lib/mockData'; // DEMO MODE
 import AppModal from '../../components/AppModal';
 import { useAppModal } from '../../hooks/useAppModal';
 
@@ -52,19 +51,6 @@ export default function AdminUserDetailScreen({ route, navigation }: Props) {
   const loadUser = async () => {
     setLoading(true);
 
-    // DEMO MODE
-    if (isDemoMode(adminProfile?.id)) {
-      const demoUser = DEMO_ALL_USERS.find((u) => u.id === userId);
-      const demoVerif = DEMO_PENDING_VERIFICATIONS.find((v) => v.profile?.id === userId);
-      setUser(demoUser ?? null);
-      setSubProfile(
-        demoVerif?.instructor_profile ?? demoVerif?.certified_profile ?? null
-      );
-      setLoading(false);
-      return;
-    }
-    // END DEMO MODE
-
     const { data: profileData } = await supabase
       .from('profiles')
       .select('*')
@@ -94,15 +80,6 @@ export default function AdminUserDetailScreen({ route, navigation }: Props) {
 
   const updateStatus = async (status: 'verified' | 'rejected') => {
     setSaving(true);
-
-    // DEMO MODE
-    if (isDemoMode(adminProfile?.id)) {
-      setUser((prev: any) => ({ ...prev, verification_status: status }));
-      setSaving(false);
-      showModal({ type: 'success', title: 'Updated', message: `Demo: status set to ${status}.` });
-      return;
-    }
-    // END DEMO MODE
 
     const { error } = await supabase
       .from('profiles')

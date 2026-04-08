@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,6 @@ import { useAuthStore } from '../../store/authStore';
 import UserAvatar from '../../components/UserAvatar';
 import AppModal from '../../components/AppModal';
 import { useAppModal } from '../../hooks/useAppModal';
-import { isDemoMode, DEMO_DIVE_REQUESTS } from '../../lib/mockData'; // DEMO MODE
 
 type Props = NativeStackScreenProps<RootStackParamList, 'DiveRequestDetail'>;
 
@@ -44,19 +43,7 @@ export default function DiveRequestDetailScreen({ navigation, route }: Props) {
 
   const { visible, isLoading, config, showModal, handleConfirm: modalConfirm, handleCancel: modalCancel } = useAppModal();
 
-  useEffect(() => {
-    fetchRequest();
-  }, [requestId]);
-
-  const fetchRequest = async () => {
-    // DEMO MODE
-    if (isDemoMode(profile?.id)) {
-      const found = DEMO_DIVE_REQUESTS.find((r) => r.id === requestId);
-      setRequest(found ?? null);
-      setLoading(false);
-      return;
-    }
-    // END DEMO MODE
+  const fetchRequest = useCallback(async () => {
     const { data } = await supabase
       .from('dive_requests')
       .select(`
@@ -68,18 +55,26 @@ export default function DiveRequestDetailScreen({ navigation, route }: Props) {
       .single();
     setRequest(data);
     setLoading(false);
-  };
+  }, [requestId]);
+
+  useEffect(() => {
+    fetchRequest();
+
+    const channel = supabase
+      .channel(`dive-request-${requestId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'buddyline',
+        table: 'dive_requests',
+        filter: `id=eq.${requestId}`,
+      }, (payload) => setRequest((prev: any) => prev ? { ...prev, ...(payload.new as any) } : prev))
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchRequest, requestId]);
 
   const updateStatus = async (status: DiveRequestStatus) => {
     setActionLoading(true);
-    // DEMO MODE
-    if (isDemoMode(profile?.id)) {
-      await new Promise((r) => setTimeout(r, 400));
-      setRequest((prev: any) => ({ ...prev, status }));
-      setActionLoading(false);
-      return;
-    }
-    // END DEMO MODE
     const { error } = await supabase
       .from('dive_requests')
       .update({ status })

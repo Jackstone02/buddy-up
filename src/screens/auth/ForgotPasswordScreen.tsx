@@ -34,7 +34,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
 
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: 'https://jackstone02.github.io/buddy-up/password-reset.html',
+      redirectTo: 'https://jackstone02.github.io/buddyline/password-reset.html',
     });
     setLoading(false);
 
@@ -72,7 +72,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
           </View>
 
           <Text style={styles.desc}>
-            Enter the email address linked to your Buddy Up account and we'll send you a link to reset your password.
+            Enter the email address linked to your Buddyline account and we'll send you a link to reset your password.
           </Text>
 
           <Text style={styles.label}>Email address</Text>

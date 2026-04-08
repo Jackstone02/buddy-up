@@ -2,7 +2,9 @@
 export type UserRole = 'beginner' | 'certified' | 'instructor' | 'admin';
 export type VerificationStatus = 'none' | 'pending' | 'verified' | 'rejected';
 export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
-export type DiveRequestStatus = 'pending' | 'accepted' | 'declined' | 'cancelled';
+export type DiveRequestStatus = 'pending' | 'accepted' | 'declined' | 'cancelled' | 'completed';
+export type DiveSessionStatus = 'open' | 'full' | 'cancelled' | 'completed';
+export type DiveType = 'line_training' | 'fun_dive' | 'spearfishing' | 'pool' | 'dynamic' | 'static' | 'other';
 export type Discipline =
   | 'pool'
   | 'depth'
@@ -27,6 +29,7 @@ export interface Profile {
   created_at: string;
   latitude?: number | null;
   longitude?: number | null;
+  rejection_reason?: string | null;
 }
 
 export interface CertifiedProfile {
@@ -34,6 +37,7 @@ export interface CertifiedProfile {
   cert_level: string;
   agency: string;
   years_experience: number;
+  max_depth_m: number | null;
   disciplines: Discipline[];
   cert_card_url: string;
 }
@@ -122,6 +126,31 @@ export interface DiveRequest {
   buddy?: any;
 }
 
+export interface DiveSession {
+  id: string;
+  creator_id: string;
+  location_name: string;
+  latitude: number | null;
+  longitude: number | null;
+  scheduled_at: string;
+  max_depth_m: number | null;
+  dive_type: DiveType | null;
+  spots_needed: number;
+  notes: string | null;
+  status: DiveSessionStatus;
+  created_at: string;
+  // joined
+  creator?: any;
+  member_count?: number;
+}
+
+export interface DiveSessionMember {
+  session_id: string;
+  user_id: string;
+  joined_at: string;
+  user?: any;
+}
+
 // ─── Navigation Param Lists ────────────────────────────────────────────────
 
 export type RootStackParamList = {
@@ -156,6 +185,10 @@ export type RootStackParamList = {
   // Dive request routes
   DiveRequestForm: { buddyId: string; buddyName: string };
   DiveRequestDetail: { requestId: string };
+  // Dive session routes (open join model)
+  CreateSession: undefined;
+  SessionDetail: { sessionId: string };
+  SessionsList: undefined;
   // Password reset
   ForgotPassword: undefined;
   ResetPassword: { accessToken: string; refreshToken: string };
@@ -166,6 +199,7 @@ export type FindMode = 'buddy' | 'instructor';
 export type AdminTabParamList = {
   Overview: undefined;
   Verifications: undefined;
+  Reports: undefined;
 };
 
 export type BeginnerTabParamList = {

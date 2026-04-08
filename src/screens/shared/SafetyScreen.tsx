@@ -7,10 +7,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from '../../types';
 import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
+import { supabase } from '../../lib/supabase';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Safety'>;
 
-const SAFETY_KEY = '@buddyup:safetyAccepted';
+const SAFETY_KEY = '@buddyline:safetyAccepted';
 
 const RULES = [
   {
@@ -29,7 +30,7 @@ const RULES = [
     icon: 'phone-portrait-outline',
     color: Colors.accent,
     title: 'This app connects — it does not supervise',
-    desc: 'Buddy Up facilitates connections only. We do not monitor dives or provide emergency services.',
+    desc: 'Buddyline facilitates connections only. We do not monitor dives or provide emergency services.',
   },
   {
     icon: 'heart-outline',
@@ -46,6 +47,15 @@ export default function SafetyScreen({ navigation, route }: Props) {
   const handleAccept = async () => {
     await AsyncStorage.setItem(SAFETY_KEY, 'true');
     setSafetyAccepted(true);
+    // Write authoritative legal record to Supabase if not already set
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from('profiles')
+        .update({ tos_accepted_at: new Date().toISOString() })
+        .eq('id', user.id)
+        .is('tos_accepted_at', null);
+    }
     navigation.replace(nextRoute);
   };
 
@@ -76,7 +86,7 @@ export default function SafetyScreen({ navigation, route }: Props) {
 
         <View style={styles.disclaimerBox}>
           <Text style={styles.disclaimerText}>
-            By continuing, you acknowledge that freediving carries inherent risks. You are solely responsible for your own dive planning, safety, and decision-making. Buddy Up provides no guarantee of safety and assumes no liability for incidents that occur during dives arranged through this app.
+            By continuing, you acknowledge that freediving carries inherent risks. You are solely responsible for your own dive planning, safety, and decision-making. Buddyline provides no guarantee of safety and assumes no liability for incidents that occur during dives arranged through this app.
           </Text>
         </View>
 

@@ -11,7 +11,7 @@ import { useAuthStore } from '../../store/authStore';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'VerificationPending'>;
 
-const SAFETY_KEY = '@buddyup:safetyAccepted';
+const SAFETY_KEY = '@buddyline:safetyAccepted';
 
 export default function VerificationPendingScreen({ navigation }: Props) {
   const { profile, setProfile, clearAuth } = useAuthStore();
@@ -19,22 +19,21 @@ export default function VerificationPendingScreen({ navigation }: Props) {
   useEffect(() => {
     if (!profile) return;
 
-    // Poll for verification status change using Supabase realtime
     const channel = supabase
       .channel('verification-watch')
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
-          schema: 'public',
+          schema: 'buddyline',
           table: 'profiles',
           filter: `id=eq.${profile.id}`,
         },
         async (payload) => {
           const updated = payload.new as any;
-          if (updated.verification_status === 'verified') {
-            setProfile({ ...profile, ...updated });
+          setProfile({ ...profile, ...updated });
 
+          if (updated.verification_status === 'verified') {
             const safetyVal = await AsyncStorage.getItem(SAFETY_KEY);
             const safetyOk = safetyVal === 'true';
             const nextRoute = profile.role === 'instructor' ? 'InstructorTabs' : 'CertifiedTabs';
@@ -58,6 +57,8 @@ export default function VerificationPendingScreen({ navigation }: Props) {
     navigation.replace('Welcome');
   };
 
+  const isRejected = profile?.verification_status === 'rejected';
+
   const STEPS = [
     { icon: 'cloud-upload-outline', title: 'Documents submitted', done: true },
     { icon: 'search-outline', title: 'Under review', done: false },
@@ -67,35 +68,72 @@ export default function VerificationPendingScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <SafeAreaView style={styles.header} edges={['top']}>
-        <View style={styles.iconCircle}>
-          <ActivityIndicator size="large" color={Colors.accent} />
+        <View style={[styles.iconCircle, isRejected && styles.iconCircleRejected]}>
+          {isRejected
+            ? <Ionicons name="close-circle" size={40} color={Colors.error} />
+            : <ActivityIndicator size="large" color={Colors.accent} />}
         </View>
-        <Text style={styles.headerTitle}>Verification Pending</Text>
+        <Text style={styles.headerTitle}>
+          {isRejected ? 'Verification Rejected' : 'Verification Pending'}
+        </Text>
         <Text style={styles.headerSub}>
-          Your documents are under review.{'\n'}This helps keep our community safe.
+          {isRejected
+            ? 'Your credentials could not be verified.\nPlease review the feedback and resubmit.'
+            : 'Your documents are under review.\nThis helps keep our community safe.'}
         </Text>
       </SafeAreaView>
 
       <View style={styles.body}>
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>What happens next?</Text>
-          {STEPS.map((s, i) => (
-            <View key={i} style={styles.step}>
-              <View style={[styles.stepIcon, s.done && styles.stepIconDone]}>
-                <Ionicons name={s.icon as any} size={18} color={s.done ? '#fff' : Colors.textMuted} />
+        {isRejected ? (
+          <>
+            {profile?.rejection_reason ? (
+              <View style={styles.rejectionCard}>
+                <Ionicons name="alert-circle-outline" size={20} color={Colors.error} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rejectionLabel}>Reason from reviewer</Text>
+                  <Text style={styles.rejectionText}>{profile.rejection_reason}</Text>
+                </View>
               </View>
-              <Text style={[styles.stepText, s.done && styles.stepTextDone]}>{s.title}</Text>
-              {s.done && <Ionicons name="checkmark" size={16} color={Colors.success} />}
+            ) : (
+              <View style={styles.rejectionCard}>
+                <Ionicons name="alert-circle-outline" size={20} color={Colors.error} />
+                <Text style={[styles.rejectionText, { flex: 1 }]}>
+                  No specific reason was provided. Please ensure your credentials are clear and legible.
+                </Text>
+              </View>
+            )}
+            <TouchableOpacity
+              style={styles.resubmitBtn}
+              onPress={() => navigation.replace('ProfileSetup', { role: profile!.role as any })}
+            >
+              <Ionicons name="refresh-outline" size={18} color="#fff" />
+              <Text style={styles.resubmitBtnText}>Resubmit Credentials</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>What happens next?</Text>
+              {STEPS.map((s, i) => (
+                <View key={i} style={styles.step}>
+                  <View style={[styles.stepIcon, s.done && styles.stepIconDone]}>
+                    <Ionicons name={s.icon as any} size={18} color={s.done ? '#fff' : Colors.textMuted} />
+                  </View>
+                  <Text style={[styles.stepText, s.done && styles.stepTextDone]}>{s.title}</Text>
+                  {s.done && <Ionicons name="checkmark" size={16} color={Colors.success} />}
+                </View>
+              ))}
             </View>
-          ))}
-        </View>
 
-        <View style={styles.infoCard}>
-          <Ionicons name="information-circle-outline" size={20} color={Colors.primary} />
-          <Text style={styles.infoText}>
-            You can explore the app while waiting. We'll automatically take you to the app when verified — no need to check back.
-          </Text>
-        </View>
+            <View style={styles.infoCard}>
+              <Ionicons name="information-circle-outline" size={20} color={Colors.primary} />
+              <Text style={styles.infoText}>
+                You can explore the app while waiting. We'll automatically take you to the app when verified — no need to check back.
+              </Text>
+            </View>
+          </>
+        )}
+
 
         <View style={styles.disclaimer}>
           <Text style={styles.disclaimerText}>
@@ -201,4 +239,31 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
   },
   signOutText: { fontSize: FontSize.md, color: Colors.textSecondary, fontWeight: '600' },
+  iconCircleRejected: { backgroundColor: Colors.error + '18', borderColor: Colors.error + '40' },
+  rejectionCard: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    backgroundColor: Colors.error + '10',
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.error + '35',
+  },
+  rejectionLabel: { fontSize: FontSize.xs, fontWeight: '700', color: Colors.error, marginBottom: 3 },
+  rejectionText: { fontSize: FontSize.sm, color: Colors.text, lineHeight: 18 },
+  resubmitBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.md,
+    paddingVertical: 14,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  resubmitBtnText: { color: '#fff', fontWeight: '700', fontSize: FontSize.md },
 });

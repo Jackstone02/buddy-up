@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,6 @@ import { RootStackParamList } from '../../types';
 import { Colors, Spacing, FontSize, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
-import { isDemoMode, getDemoConversations } from '../../lib/mockData'; // DEMO MODE
 import UserAvatar from '../../components/UserAvatar';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -32,16 +31,23 @@ export default function MessagesListScreen() {
     }, [profile])
   );
 
+  // Real-time: re-fetch conversation list when any message arrives or is sent
+  useEffect(() => {
+    if (!profile) return;
+    const channel = supabase
+      .channel('messages-list')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'buddyline',
+        table: 'messages',
+        filter: `receiver_id=eq.${profile.id}`,
+      }, () => fetchConversations())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [profile?.id]);
+
   const fetchConversations = async () => {
     if (!profile) return;
-
-    // DEMO MODE — skip Supabase when using demo account
-    if (isDemoMode(profile.id)) {
-      setConversations(getDemoConversations(profile.id));
-      setLoading(false);
-      return;
-    }
-    // END DEMO MODE
 
     const { data } = await supabase
       .from('messages')

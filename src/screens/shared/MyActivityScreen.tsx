@@ -18,8 +18,6 @@ import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import UserAvatar from '../../components/UserAvatar';
-import { isDemoMode, DEMO_CUSTOMER_BOOKINGS, DEMO_DIVE_REQUESTS } from '../../lib/mockData';
-
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type ScreenView = 'calendar' | 'requests';
 type RequestTab = 'Incoming' | 'Outgoing';
@@ -81,11 +79,6 @@ export default function MyActivityScreen() {
   const fetchBookings = async () => {
     if (!profile) return;
     setCalLoading(true);
-    if (isDemoMode(profile.id)) {
-      setBookings(DEMO_CUSTOMER_BOOKINGS.filter((b) => b.customer_id === profile.id));
-      setCalLoading(false);
-      return;
-    }
     const { data } = await supabase
       .from('bookings')
       .select('*, instructor:profiles!instructor_id(id, display_name, avatar_url), lesson_type:lesson_types(*)')
@@ -100,14 +93,6 @@ export default function MyActivityScreen() {
     if (!profile) return;
     if (isRefresh) setReqRefreshing(true);
     else setReqLoading(true);
-
-    if (isDemoMode(profile.id)) {
-      const col = requestTab === 'Incoming' ? 'buddy_id' : 'requester_id';
-      setRequests(DEMO_DIVE_REQUESTS.filter((r) => r[col] === profile.id));
-      setReqLoading(false);
-      setReqRefreshing(false);
-      return;
-    }
 
     const column  = requestTab === 'Incoming' ? 'buddy_id' : 'requester_id';
     const otherKey = requestTab === 'Incoming' ? 'requester' : 'buddy';

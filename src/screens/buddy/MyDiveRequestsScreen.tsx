@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -50,6 +50,27 @@ export default function MyDiveRequestsScreen() {
       fetchRequests();
     }, [activeTab])
   );
+
+  // Real-time: refresh when a dive request is created or its status changes
+  useEffect(() => {
+    if (!profile) return;
+    const channel = supabase
+      .channel('dive-requests-list')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'buddyline',
+        table: 'dive_requests',
+        filter: `buddy_id=eq.${profile.id}`,
+      }, () => fetchRequests())
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'buddyline',
+        table: 'dive_requests',
+        filter: `requester_id=eq.${profile.id}`,
+      }, () => fetchRequests())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [profile?.id, activeTab]);
 
   const fetchRequests = async (isRefresh = false) => {
     if (!profile) return;

@@ -1,4 +1,4 @@
-# Buddy Up — Founder Action Plan Implementation
+# Buddyline — Founder Action Plan Implementation
 
 ## Context
 The Founder Action Plan defines the app's purpose, user roles, required screens, safety/legal requirements, and a future feature roadmap. The codebase is already substantially built. This plan maps the founder's requirements against what exists, identifies the gaps, and outlines what needs to be done — including database stubs that future-proof V2 features so they can be added without breaking schema changes.

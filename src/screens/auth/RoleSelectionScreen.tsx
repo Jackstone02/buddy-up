@@ -24,27 +24,27 @@ const ROLES: { key: UserRole; icon: any; color: string; bg: string; title: strin
     icon: 'person-outline',
     color: Colors.emerald,
     bg: Colors.emerald + '18',
-    title: 'Beginner / Uncertified',
-    desc: "I'm new to freediving or not yet certified",
-    note: 'Access: Find instructors & message them',
+    title: "I'm Learning",
+    desc: 'New to freediving or looking to get my first certification',
+    note: 'Find nearby instructors and book your first lesson',
   },
   {
     key: 'certified',
     icon: 'people',
     color: Colors.primary,
     bg: Colors.primary + '15',
-    title: 'Certified Freediver',
-    desc: 'I hold a recognized freediving certification',
-    note: 'Access: Buddy matching + instructor search (requires verification)',
+    title: 'I Dive Independently',
+    desc: 'I have a cert card and want to find safe dive buddies',
+    note: 'Join open dive sessions · Match with verified buddies',
   },
   {
     key: 'instructor',
     icon: 'school',
     color: Colors.purple,
     bg: Colors.purple + '18',
-    title: 'Freediving Instructor',
-    desc: 'I teach freediving and hold instructor credentials',
-    note: 'Access: Appear in instructor search (requires verification)',
+    title: 'I Teach Freediving',
+    desc: 'I hold instructor credentials and offer courses',
+    note: 'Get discovered by students · Manage your schedule',
   },
 ];
 
@@ -94,9 +94,9 @@ export default function RoleSelectionScreen({ navigation }: Props) {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <SafeAreaView style={styles.header} edges={['top']}>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Choose Your Role</Text>
+          <Text style={styles.headerTitle}>What brings you here?</Text>
           <Text style={styles.headerSub}>
-            Your role determines what features you can access.
+            We'll set up the right experience for you.
           </Text>
         </View>
       </SafeAreaView>

@@ -18,6 +18,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types';
 import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
+import { getCurrentCoords } from '../../lib/location';
 import { useAuthStore } from '../../store/authStore';
 import AppModal from '../../components/AppModal';
 import { useAppModal } from '../../hooks/useAppModal';
@@ -59,10 +60,10 @@ export default function ProfileSetupInstructorScreen({ navigation }: Props) {
     const ext = credentialsUri.split('.').pop() || 'jpg';
     const path = `credentials/${userId}/credentials.${ext}`;
 
-    const { error } = await supabase.storage.from('buddy-up').upload(path, blob, { upsert: true });
+    const { error } = await supabase.storage.from('buddyline').upload(path, blob, { upsert: true });
     if (error) return null;
 
-    const { data } = supabase.storage.from('buddy-up').getPublicUrl(path);
+    const { data } = supabase.storage.from('buddyline').getPublicUrl(path);
     return data.publicUrl;
   };
 
@@ -91,12 +92,15 @@ export default function ProfileSetupInstructorScreen({ navigation }: Props) {
       return;
     }
 
+    const coords = await getCurrentCoords();
+
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .update({
         city_region: teachingLocation.trim(),
         bio: bio.trim(),
         verification_status: 'pending',
+        ...(coords ? { latitude: coords.latitude, longitude: coords.longitude } : {}),
       })
       .eq('id', user.id)
       .select('*')

@@ -1,6 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { Linking } from 'react-native';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
+import * as Notifications from 'expo-notifications';
+import { registerPushToken } from '../lib/notifications';
+import { useAuthStore } from '../store/authStore';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
 
@@ -31,6 +34,9 @@ import InstructorProfileScreen from '../screens/instructor/InstructorProfileScre
 import BuddyProfileScreen from '../screens/buddy/BuddyProfileScreen';
 import DiveRequestFormScreen from '../screens/buddy/DiveRequestFormScreen';
 import DiveRequestDetailScreen from '../screens/buddy/DiveRequestDetailScreen';
+import CreateSessionScreen from '../screens/buddy/CreateSessionScreen';
+import SessionDetailScreen from '../screens/buddy/SessionDetailScreen';
+import SessionsListScreen from '../screens/buddy/SessionsListScreen';
 
 // Booking screens
 import BookingFormScreen from '../screens/shared/BookingFormScreen';
@@ -67,6 +73,50 @@ function parseResetUrl(url: string): { accessToken: string; refreshToken: string
 
 export default function AppNavigator() {
   const navRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
+  const { profile } = useAuthStore();
+
+  // Register push token whenever the user logs in
+  useEffect(() => {
+    if (profile?.id) {
+      registerPushToken(profile.id);
+    }
+  }, [profile?.id]);
+
+  // Handle notification taps — navigate to the relevant screen
+  useEffect(() => {
+    const handleNotificationData = (data?: Record<string, any>) => {
+      if (!data || !navRef.current) return;
+      switch (data.type) {
+        case 'message':
+          navRef.current.navigate('Messaging', {
+            otherUserId: data.otherUserId,
+            otherUserName: data.otherUserName,
+          });
+          break;
+        case 'dive_request':
+          navRef.current.navigate('DiveRequestDetail', { requestId: data.requestId });
+          break;
+        case 'booking_customer':
+          navRef.current.navigate('BookingDetail', { bookingId: data.bookingId });
+          break;
+        case 'booking_instructor':
+          navRef.current.navigate('InstructorBookingDetail', { bookingId: data.bookingId });
+          break;
+      }
+    };
+
+    // App opened from a notification (cold/warm start)
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) handleNotificationData(response.notification.request.content.data);
+    });
+
+    // Notification tapped while app is open
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      handleNotificationData(response.notification.request.content.data);
+    });
+
+    return () => sub.remove();
+  }, []);
 
   useEffect(() => {
     const handleUrl = (url: string) => {
@@ -129,6 +179,11 @@ export default function AppNavigator() {
         {/* Dive request flow */}
         <Stack.Screen name="DiveRequestForm" component={DiveRequestFormScreen} />
         <Stack.Screen name="DiveRequestDetail" component={DiveRequestDetailScreen} />
+
+        {/* Dive session flow */}
+        <Stack.Screen name="CreateSession" component={CreateSessionScreen} />
+        <Stack.Screen name="SessionDetail" component={SessionDetailScreen} />
+        <Stack.Screen name="SessionsList" component={SessionsListScreen} />
 
         {/* Booking flow */}
         <Stack.Screen name="BookingForm" component={BookingFormScreen} />

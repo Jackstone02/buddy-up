@@ -58,7 +58,7 @@ export default function SocialOnboardingScreen({ navigation }: Props) {
 
   const handleContinue = async () => {
     if (!ageConfirmed) {
-      showModal({ type: 'warning', title: 'Age Requirement', message: 'You must be 18 or older to use Buddy Up.' });
+      showModal({ type: 'warning', title: 'Age Requirement', message: 'You must be 18 or older to use Buddyline.' });
       return;
     }
     if (!tosConfirmed) {

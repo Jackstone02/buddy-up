@@ -16,7 +16,6 @@ import { RootStackParamList } from '../../types';
 import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
-import { isDemoMode, DEMO_LESSON_TYPES, DEMO_SLOTS } from '../../lib/mockData'; // DEMO MODE
 import AppModal from '../../components/AppModal';
 import { useAppModal } from '../../hooks/useAppModal';
 
@@ -44,16 +43,6 @@ export default function BookingFormScreen() {
   const fetchData = async () => {
     setLoading(true);
 
-    // DEMO MODE
-    if (isDemoMode(profile?.id)) {
-      const lt = DEMO_LESSON_TYPES.find((l) => l.id === lessonTypeId) ?? DEMO_LESSON_TYPES[0];
-      setLessonType(lt);
-      setSlots(DEMO_SLOTS.filter((s) => !s.is_booked));
-      setLoading(false);
-      return;
-    }
-    // END DEMO MODE
-
     const [{ data: lt }, { data: availSlots }] = await Promise.all([
       supabase.from('lesson_types').select('*').eq('id', lessonTypeId).single(),
       supabase
@@ -78,16 +67,6 @@ export default function BookingFormScreen() {
     }
     if (!profile) return;
     setSubmitting(true);
-
-    // DEMO MODE
-    if (isDemoMode(profile.id)) {
-      setTimeout(() => {
-        setSubmitting(false);
-        navigation.replace('BookingConfirmation', { bookingId: 'booking-demo-new' });
-      }, 800);
-      return;
-    }
-    // END DEMO MODE
 
     const slot = slots.find((s) => s.id === selectedSlot)!;
 

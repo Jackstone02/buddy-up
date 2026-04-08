@@ -14,7 +14,6 @@ import { RootStackParamList } from '../../types';
 import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
-import { isDemoMode } from '../../lib/mockData'; // DEMO MODE
 import AppModal from '../../components/AppModal';
 import UserAvatar from '../../components/UserAvatar';
 import { useAppModal } from '../../hooks/useAppModal';
@@ -50,9 +49,7 @@ export default function ProfileScreen() {
       cancelText: 'Cancel',
       showCancel: true,
       onConfirm: async () => {
-        if (!isDemoMode(profile?.id)) {
-          await supabase.auth.signOut();
-        }
+        await supabase.auth.signOut();
         clearAuth();
         navigation.replace('Welcome');
       },

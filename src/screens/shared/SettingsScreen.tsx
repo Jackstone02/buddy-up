@@ -1,10 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
+import { useFocusEffect } from '@react-navigation/native';
 import { RootStackParamList } from '../../types';
 import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
@@ -16,11 +17,38 @@ const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
-const SAFETY_KEY = '@buddyup:safetyAccepted';
+const SAFETY_KEY = '@buddyline:safetyAccepted';
 
 export default function SettingsScreen({ navigation }: Props) {
   const { profile, clearAuth, setSafetyAccepted } = useAuthStore();
   const { visible, isLoading, config, showModal, handleConfirm, handleCancel } = useAppModal();
+  const [blockedUsers, setBlockedUsers] = useState<{ blocked_id: string; blocked: { display_name: string } }[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!profile) return;
+      supabase
+        .from('blocks')
+        .select('blocked_id, blocked:profiles!blocked_id(display_name)')
+        .eq('blocker_id', profile.id)
+        .then(({ data }) => setBlockedUsers((data as any) || []));
+    }, [profile?.id])
+  );
+
+  const handleUnblock = (blockedId: string, name: string) => {
+    showModal({
+      type: 'confirm',
+      title: 'Unblock User',
+      message: `Unblock ${name}? They will be able to appear in your search results again.`,
+      confirmText: 'Unblock',
+      cancelText: 'Cancel',
+      showCancel: true,
+      onConfirm: async () => {
+        await supabase.from('blocks').delete().eq('blocker_id', profile!.id).eq('blocked_id', blockedId);
+        setBlockedUsers((prev) => prev.filter((b) => b.blocked_id !== blockedId));
+      },
+    });
+  };
 
   const handleSignOut = () => {
     showModal({
@@ -114,6 +142,35 @@ export default function SettingsScreen({ navigation }: Props) {
           ))}
         </View>
 
+        {/* Blocked users */}
+        {blockedUsers.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Blocked Users</Text>
+            {blockedUsers.map((b, i) => (
+              <View
+                key={b.blocked_id}
+                style={[
+                  styles.row,
+                  i === 0 && styles.rowFirst,
+                  i === blockedUsers.length - 1 && styles.rowLast,
+                ]}
+              >
+                <View style={[styles.rowIconWrap, { backgroundColor: Colors.error + '12' }]}>
+                  <Ionicons name="ban-outline" size={18} color={Colors.error} />
+                </View>
+                <Text style={styles.rowLabel}>{b.blocked?.display_name ?? 'Unknown'}</Text>
+                <TouchableOpacity
+                  style={styles.unblockBtn}
+                  onPress={() => handleUnblock(b.blocked_id, b.blocked?.display_name ?? 'this user')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.unblockText}>Unblock</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
+
         <View style={styles.section}>
           <TouchableOpacity
             style={[styles.row, styles.rowFirst, styles.rowLast, styles.signOutRow]}
@@ -128,7 +185,7 @@ export default function SettingsScreen({ navigation }: Props) {
         </View>
 
         <Text style={styles.disclaimer}>
-          Buddy Up — Never Dive Alone{'\n'}
+          Buddyline — Never Dive Alone{'\n'}
           This app connects people only. It does not supervise dives.
         </Text>
 
@@ -231,6 +288,24 @@ const styles = StyleSheet.create({
   },
   rowLabel: { flex: 1, fontSize: FontSize.md, fontWeight: '600', color: Colors.text },
   signOutRow: {},
+  sectionLabel: {
+    fontSize: FontSize.xs,
+    fontWeight: '700',
+    color: Colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: Spacing.xs,
+    paddingHorizontal: 2,
+  },
+  unblockBtn: {
+    backgroundColor: Colors.error + '12',
+    borderRadius: Radius.full,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: Colors.error + '35',
+  },
+  unblockText: { fontSize: FontSize.xs, fontWeight: '700', color: Colors.error },
   disclaimer: {
     fontSize: FontSize.xs,
     color: Colors.textMuted,

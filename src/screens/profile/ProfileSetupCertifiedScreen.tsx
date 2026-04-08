@@ -18,6 +18,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList, Discipline } from '../../types';
 import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
+import { getCurrentCoords } from '../../lib/location';
 import { useAuthStore } from '../../store/authStore';
 import AppModal from '../../components/AppModal';
 import { useAppModal } from '../../hooks/useAppModal';
@@ -40,6 +41,7 @@ export default function ProfileSetupCertifiedScreen({ navigation }: Props) {
   const [certLevel, setCertLevel] = useState('');
   const [agency, setAgency] = useState('');
   const [yearsExperience, setYearsExperience] = useState('');
+  const [maxDepth, setMaxDepth] = useState('');
   const [disciplines, setDisciplines] = useState<Discipline[]>([]);
   const [certCardUri, setCertCardUri] = useState<string | null>(null);
   const [availableToDive, setAvailableToDive] = useState(false);
@@ -70,10 +72,10 @@ export default function ProfileSetupCertifiedScreen({ navigation }: Props) {
     const ext = certCardUri.split('.').pop() || 'jpg';
     const path = `cert-cards/${userId}/cert.${ext}`;
 
-    const { error } = await supabase.storage.from('buddy-up').upload(path, blob, { upsert: true });
+    const { error } = await supabase.storage.from('buddyline').upload(path, blob, { upsert: true });
     if (error) return null;
 
-    const { data } = supabase.storage.from('buddy-up').getPublicUrl(path);
+    const { data } = supabase.storage.from('buddyline').getPublicUrl(path);
     return data.publicUrl;
   };
 
@@ -102,6 +104,8 @@ export default function ProfileSetupCertifiedScreen({ navigation }: Props) {
       return;
     }
 
+    const coords = await getCurrentCoords();
+
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .update({
@@ -109,6 +113,7 @@ export default function ProfileSetupCertifiedScreen({ navigation }: Props) {
         bio: bio.trim(),
         available_to_dive: availableToDive,
         verification_status: 'pending',
+        ...(coords ? { latitude: coords.latitude, longitude: coords.longitude } : {}),
       })
       .eq('id', user.id)
       .select('*')
@@ -125,6 +130,7 @@ export default function ProfileSetupCertifiedScreen({ navigation }: Props) {
       cert_level: certLevel,
       agency: agency.trim(),
       years_experience: parseInt(yearsExperience) || 0,
+      max_depth_m: parseInt(maxDepth) || null,
       disciplines,
       cert_card_url: certCardUrl,
     });
@@ -211,6 +217,19 @@ export default function ProfileSetupCertifiedScreen({ navigation }: Props) {
               placeholderTextColor={Colors.textMuted}
               value={yearsExperience}
               onChangeText={setYearsExperience}
+              keyboardType="number-pad"
+            />
+          </View>
+
+          <Text style={[styles.label, { marginTop: Spacing.md }]}>Max Depth (m)</Text>
+          <View style={styles.inputWrap}>
+            <Ionicons name="arrow-down-outline" size={18} color={Colors.textMuted} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. 30"
+              placeholderTextColor={Colors.textMuted}
+              value={maxDepth}
+              onChangeText={setMaxDepth}
               keyboardType="number-pad"
             />
           </View>

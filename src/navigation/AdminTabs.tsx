@@ -6,6 +6,7 @@ import { AdminTabParamList } from '../types';
 
 import AdminOverviewScreen from '../screens/admin/AdminOverviewScreen';
 import AdminVerificationsScreen from '../screens/admin/AdminVerificationsScreen';
+import AdminReportsScreen from '../screens/admin/AdminReportsScreen';
 
 const Tab = createBottomTabNavigator<AdminTabParamList>();
 
@@ -24,8 +25,9 @@ export default function AdminTabs() {
         tabBarLabelStyle: { fontSize: FontSize.xs, fontWeight: '600' },
         tabBarIcon: ({ color, size, focused }) => {
           const icons: Record<string, [string, string]> = {
-            Overview:      ['grid', 'grid-outline'],
-            Verifications: ['shield-checkmark', 'shield-checkmark-outline'],
+            Overview:      ['grid',              'grid-outline'],
+            Verifications: ['shield-checkmark',  'shield-checkmark-outline'],
+            Reports:       ['flag',              'flag-outline'],
           };
           const [on, off] = icons[route.name] ?? ['ellipse', 'ellipse-outline'];
           return <Ionicons name={(focused ? on : off) as any} size={size} color={color} />;
@@ -34,6 +36,7 @@ export default function AdminTabs() {
     >
       <Tab.Screen name="Overview" component={AdminOverviewScreen} options={{ title: 'Overview' }} />
       <Tab.Screen name="Verifications" component={AdminVerificationsScreen} options={{ title: 'Verifications' }} />
+      <Tab.Screen name="Reports" component={AdminReportsScreen} options={{ title: 'Reports' }} />
     </Tab.Navigator>
   );
 }

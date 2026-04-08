@@ -29,6 +29,16 @@ const DIVE_TYPE_LABELS: Record<DiveType, string> = {
   other: 'Other',
 };
 
+const FILTERS: { key: DiveType | 'all'; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'fun_dive', label: 'Fun Dive' },
+  { key: 'line_training', label: 'Line Training' },
+  { key: 'pool', label: 'Pool' },
+  { key: 'dynamic', label: 'Dynamic' },
+  { key: 'static', label: 'Static' },
+  { key: 'spearfishing', label: 'Spearfishing' },
+];
+
 function formatDateTime(iso: string) {
   const d = new Date(iso);
   const now = new Date();
@@ -36,43 +46,50 @@ function formatDateTime(iso: string) {
   const tomorrow = new Date(now);
   tomorrow.setDate(now.getDate() + 1);
   const isTomorrow = d.toDateString() === tomorrow.toDateString();
+
   const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   if (isToday) return `Today at ${time}`;
   if (isTomorrow) return `Tomorrow at ${time}`;
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ` at ${time}`;
 }
 
-export default function HomeCertifiedScreen() {
+export default function SessionsListScreen() {
   const navigation = useNavigation<Nav>();
   const { profile } = useAuthStore();
   const [sessions, setSessions] = useState<(DiveSession & { member_count: number })[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<DiveType | 'all'>('all');
 
   const fetchSessions = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
 
-    const { data } = await supabase
+    let query = supabase
       .from('dive_sessions')
       .select('*, creator:profiles(id, display_name, avatar_url, verification_status), dive_session_members(count)')
       .eq('status', 'open')
       .gte('scheduled_at', new Date().toISOString())
       .order('scheduled_at', { ascending: true })
-      .limit(20);
+      .limit(50);
+
+    if (activeFilter !== 'all') {
+      query = query.eq('dive_type', activeFilter);
+    }
+
+    const { data } = await query;
 
     if (data) {
-      setSessions(
-        data.map((s: any) => ({
-          ...s,
-          member_count: s.dive_session_members?.[0]?.count ?? 0,
-        }))
-      );
+      const mapped = data.map((s: any) => ({
+        ...s,
+        member_count: s.dive_session_members?.[0]?.count ?? 0,
+      }));
+      setSessions(mapped);
     }
 
     if (isRefresh) setRefreshing(false);
     else setLoading(false);
-  }, []);
+  }, [activeFilter]);
 
   useFocusEffect(
     useCallback(() => {
@@ -90,41 +107,44 @@ export default function HomeCertifiedScreen() {
         <SafeAreaView edges={['top']}>
           <View style={styles.heroContent}>
             <View>
-              <Text style={styles.heroTitle}>Home</Text>
+              <Text style={styles.heroTitle}>Dive Sessions</Text>
               <Text style={styles.heroSub}>
-                {profile?.city_region ? `Sessions near ${profile.city_region}` : 'Upcoming dive sessions'}
+                {profile?.city_region ? `Open sessions near ${profile.city_region}` : 'Open sessions near you'}
               </Text>
             </View>
-            <View style={styles.headerActions}>
-              <TouchableOpacity
-                style={styles.iconBtn}
-                onPress={() => navigation.navigate('CreateSession')}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="add" size={22} color="#fff" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.iconBtn}
-                onPress={() => navigation.navigate('Settings')}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="settings-outline" size={20} color={Colors.accentLight} />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={styles.postBtn}
+              onPress={() => navigation.navigate('CreateSession')}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="add" size={22} color="#fff" />
+            </TouchableOpacity>
           </View>
+
+          {/* Filter chips */}
+          <FlatList
+            horizontal
+            data={FILTERS}
+            keyExtractor={(item) => item.key}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterList}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.filterChip, activeFilter === item.key && styles.filterChipActive]}
+                onPress={() => setActiveFilter(item.key)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.filterChipText, activeFilter === item.key && styles.filterChipTextActive]}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
         </SafeAreaView>
       </View>
 
-      {/* Section header */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Open Dive Sessions</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('SessionsList')} activeOpacity={0.7}>
-          <Text style={styles.sectionLink}>See all</Text>
-        </TouchableOpacity>
-      </View>
-
       {loading ? (
-        <ActivityIndicator color={Colors.primary} style={{ marginTop: Spacing.xl }} />
+        <ActivityIndicator color={Colors.primary} style={{ marginTop: Spacing.xxl }} />
       ) : (
         <FlatList
           data={sessions}
@@ -136,9 +156,9 @@ export default function HomeCertifiedScreen() {
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Ionicons name="water-outline" size={44} color={Colors.textMuted} />
-              <Text style={styles.emptyText}>No open sessions nearby</Text>
+              <Text style={styles.emptyText}>No open sessions</Text>
               <Text style={styles.emptySub}>
-                Post a dive to find buddies in your area.
+                Be the first to post a dive in your area!
               </Text>
               <TouchableOpacity
                 style={styles.emptyBtn}
@@ -159,6 +179,7 @@ export default function HomeCertifiedScreen() {
                 onPress={() => navigation.navigate('SessionDetail', { sessionId: item.id })}
                 activeOpacity={0.85}
               >
+                {/* Top row: location + spots badge */}
                 <View style={styles.cardTop}>
                   <View style={styles.locationRow}>
                     <Ionicons name="location-outline" size={15} color={Colors.primary} />
@@ -171,11 +192,13 @@ export default function HomeCertifiedScreen() {
                   </View>
                 </View>
 
+                {/* Date/time */}
                 <View style={styles.timeRow}>
                   <Ionicons name="calendar-outline" size={14} color={Colors.textSecondary} />
                   <Text style={styles.timeText}>{formatDateTime(item.scheduled_at)}</Text>
                 </View>
 
+                {/* Tags row */}
                 <View style={styles.tagsRow}>
                   {item.dive_type && (
                     <View style={styles.tag}>
@@ -195,6 +218,7 @@ export default function HomeCertifiedScreen() {
                   </View>
                 </View>
 
+                {/* Creator row */}
                 <View style={styles.creatorRow}>
                   <Ionicons name="person-circle-outline" size={14} color={Colors.textMuted} />
                   <Text style={styles.creatorText}>
@@ -209,6 +233,15 @@ export default function HomeCertifiedScreen() {
           }}
         />
       )}
+
+      {/* FAB */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => navigation.navigate('CreateSession')}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="add" size={26} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -222,30 +255,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
-    paddingBottom: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
   heroTitle: { fontSize: FontSize.xxl, fontWeight: '800', color: '#fff' },
   heroSub: { fontSize: FontSize.xs, color: Colors.accentLight, marginTop: 3 },
-  headerActions: { flexDirection: 'row', gap: Spacing.sm },
-  iconBtn: {
+  postBtn: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#FFFFFF15',
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  filterList: {
     paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xs,
+    paddingBottom: Spacing.md,
+    paddingTop: Spacing.xs,
+    gap: Spacing.xs,
   },
-  sectionTitle: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.text },
-  sectionLink: { fontSize: FontSize.sm, color: Colors.primary, fontWeight: '600' },
-  list: { paddingHorizontal: Spacing.md, paddingBottom: Spacing.xxl, gap: Spacing.sm },
+  filterChip: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 7,
+    borderRadius: Radius.full,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    marginRight: Spacing.xs,
+  },
+  filterChipActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  filterChipText: { fontSize: FontSize.xs, fontWeight: '700', color: 'rgba(255,255,255,0.7)' },
+  filterChipTextActive: { color: '#fff' },
+  list: { padding: Spacing.md, gap: Spacing.sm, paddingBottom: 100 },
   card: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.lg,
@@ -286,7 +334,12 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   tagText: { fontSize: FontSize.xs, color: Colors.primary, fontWeight: '600' },
-  creatorRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  creatorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
   creatorText: { fontSize: FontSize.xs, color: Colors.textMuted },
   emptyState: {
     alignItems: 'center',
@@ -312,4 +365,20 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   emptyBtnText: { color: '#fff', fontWeight: '700', fontSize: FontSize.md },
+  fab: {
+    position: 'absolute',
+    bottom: 28,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
+  },
 });

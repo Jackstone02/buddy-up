@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,6 @@ import { RootStackParamList, BookingStatus } from '../../types';
 import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
-import { isDemoMode, DEMO_CUSTOMER_BOOKINGS } from '../../lib/mockData'; // DEMO MODE
 import AppModal from '../../components/AppModal';
 import { useAppModal } from '../../hooks/useAppModal';
 
@@ -40,31 +39,32 @@ export default function BookingDetailScreen() {
   const [cancelling, setCancelling] = useState(false);
   const { visible, isLoading, config, showModal, handleConfirm, handleCancel: modalCancel } = useAppModal();
 
-  useEffect(() => {
-    fetchBooking();
-  }, [bookingId]);
-
-  const fetchBooking = async () => {
+  const fetchBooking = useCallback(async () => {
     setLoading(true);
-
-    // DEMO MODE
-    if (isDemoMode(profile?.id)) {
-      const b = DEMO_CUSTOMER_BOOKINGS.find((x) => x.id === bookingId) ?? DEMO_CUSTOMER_BOOKINGS[0];
-      setBooking(b);
-      setLoading(false);
-      return;
-    }
-    // END DEMO MODE
-
     const { data } = await supabase
       .from('bookings')
       .select('*, instructor:profiles!instructor_id(id, display_name, city_region, bio), lesson_type:lesson_types(*)')
       .eq('id', bookingId)
       .single();
-
     setBooking(data);
     setLoading(false);
-  };
+  }, [bookingId]);
+
+  useEffect(() => {
+    fetchBooking();
+
+    const channel = supabase
+      .channel(`booking-customer-${bookingId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'buddyline',
+        table: 'bookings',
+        filter: `id=eq.${bookingId}`,
+      }, (payload) => setBooking((prev: any) => prev ? { ...prev, ...(payload.new as any) } : prev))
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchBooking, bookingId]);
 
   const handleCancel = () => {
     showModal({
@@ -80,15 +80,6 @@ export default function BookingDetailScreen() {
 
   const doCancel = async () => {
     setCancelling(true);
-
-    // DEMO MODE
-    if (isDemoMode(profile?.id)) {
-      setBooking((b: any) => ({ ...b, status: 'cancelled' }));
-      setCancelling(false);
-      return;
-    }
-    // END DEMO MODE
-
     await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', bookingId);
     if (booking?.availability_slot_id) {
       await supabase.from('availability_slots').update({ is_booked: false }).eq('id', booking.availability_slot_id);

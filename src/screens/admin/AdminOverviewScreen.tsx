@@ -15,7 +15,6 @@ import { RootStackParamList } from '../../types';
 import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
-import { isDemoMode, DEMO_ALL_USERS, DEMO_PENDING_VERIFICATIONS } from '../../lib/mockData'; // DEMO MODE
 import AppModal from '../../components/AppModal';
 import { useAppModal } from '../../hooks/useAppModal';
 
@@ -39,6 +38,7 @@ export default function AdminOverviewScreen() {
   const navigation = useNavigation<Nav>();
   const { profile } = useAuthStore();
   const [users, setUsers] = useState<any[]>([]);
+  const [openReportCount, setOpenReportCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const { visible, isLoading, config, showModal, handleConfirm, handleCancel } = useAppModal();
@@ -53,20 +53,13 @@ export default function AdminOverviewScreen() {
     if (!profile) return;
     setLoading(true);
 
-    // DEMO MODE
-    if (isDemoMode(profile.id)) {
-      setUsers(DEMO_ALL_USERS);
-      setLoading(false);
-      return;
-    }
-    // END DEMO MODE
+    const [{ data: profilesData }, { count: reportCount }] = await Promise.all([
+      supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+      supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'open'),
+    ]);
 
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    setUsers(data || []);
+    setUsers(profilesData || []);
+    setOpenReportCount(reportCount ?? 0);
     setLoading(false);
   };
 
@@ -92,7 +85,7 @@ export default function AdminOverviewScreen() {
       cancelText: 'Cancel',
       showCancel: true,
       onConfirm: async () => {
-        if (!isDemoMode(profile?.id)) await supabase.auth.signOut();
+        await supabase.auth.signOut();
         useAuthStore.getState().clearAuth();
         navigation.replace('Welcome');
       },
@@ -106,7 +99,7 @@ export default function AdminOverviewScreen() {
           <View style={styles.heroContent}>
             <View>
               <Text style={styles.heroTitle}>Admin Panel</Text>
-              <Text style={styles.heroSub}>Buddy Up Management</Text>
+              <Text style={styles.heroSub}>Buddyline Management</Text>
             </View>
             <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut}>
               <Ionicons name="log-out-outline" size={20} color={Colors.accentLight} />
@@ -134,6 +127,10 @@ export default function AdminOverviewScreen() {
             <Text style={[styles.statNum, { color: Colors.emerald }]}>{totalBeginner}</Text>
             <Text style={[styles.statLabel, { color: Colors.emerald }]}>Beginners</Text>
           </View>
+          <View style={[styles.statCard, { borderColor: Colors.error + '60', backgroundColor: Colors.error + '0D', width: '100%' }]}>
+            <Text style={[styles.statNum, { color: Colors.error }]}>{openReportCount}</Text>
+            <Text style={[styles.statLabel, { color: Colors.error }]}>Open Reports</Text>
+          </View>
         </View>
 
         {pendingCount > 0 && (
@@ -147,6 +144,20 @@ export default function AdminOverviewScreen() {
               {pendingCount} verification{pendingCount > 1 ? 's' : ''} awaiting review
             </Text>
             <Ionicons name="chevron-forward" size={16} color={Colors.warning} />
+          </TouchableOpacity>
+        )}
+
+        {openReportCount > 0 && (
+          <TouchableOpacity
+            style={[styles.pendingBanner, { backgroundColor: Colors.error + '18', borderColor: Colors.error + '50' }]}
+            onPress={() => navigation.navigate('AdminTabs')}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="flag-outline" size={20} color={Colors.error} />
+            <Text style={[styles.pendingBannerText, { color: Colors.error }]}>
+              {openReportCount} open report{openReportCount > 1 ? 's' : ''} need review
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color={Colors.error} />
           </TouchableOpacity>
         )}
 

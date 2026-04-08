@@ -16,27 +16,19 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types';
 import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
+import { getCurrentCoords } from '../../lib/location';
 import { useAuthStore } from '../../store/authStore';
 import AppModal from '../../components/AppModal';
 import { useAppModal } from '../../hooks/useAppModal';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ProfileSetup'>;
 
-const GOALS = ['Learn freediving', 'Spearfishing', 'Depth training', 'Pool training', 'General fitness'];
-
 export default function ProfileSetupBeginnerScreen({ navigation }: Props) {
   const [cityRegion, setCityRegion] = useState('');
   const [bio, setBio] = useState('');
-  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const { setProfile } = useAuthStore();
   const { visible, isLoading, config, showModal, handleConfirm, handleCancel } = useAppModal();
-
-  const toggleGoal = (g: string) => {
-    setSelectedGoals((prev) =>
-      prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g]
-    );
-  };
 
   const handleSave = async () => {
     if (!cityRegion.trim()) {
@@ -48,9 +40,15 @@ export default function ProfileSetupBeginnerScreen({ navigation }: Props) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
 
+    const coords = await getCurrentCoords();
+
     const { data: profile, error } = await supabase
       .from('profiles')
-      .update({ city_region: cityRegion.trim(), bio: bio.trim() })
+      .update({
+        city_region: cityRegion.trim(),
+        bio: bio.trim(),
+        ...(coords ? { latitude: coords.latitude, longitude: coords.longitude } : {}),
+      })
       .eq('id', user.id)
       .select('*')
       .single();
@@ -96,21 +94,6 @@ export default function ProfileSetupBeginnerScreen({ navigation }: Props) {
             />
           </View>
           <Text style={styles.hint}>We use city/region only — no GPS tracking.</Text>
-
-          <Text style={[styles.label, { marginTop: Spacing.lg }]}>My Goals</Text>
-          <View style={styles.chipRow}>
-            {GOALS.map((g) => (
-              <TouchableOpacity
-                key={g}
-                style={[styles.chip, selectedGoals.includes(g) && styles.chipSelected]}
-                onPress={() => toggleGoal(g)}
-              >
-                <Text style={[styles.chipText, selectedGoals.includes(g) && styles.chipTextSelected]}>
-                  {g}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
 
           <Text style={[styles.label, { marginTop: Spacing.lg }]}>Short Bio (optional)</Text>
           <TextInput
@@ -189,17 +172,6 @@ const styles = StyleSheet.create({
   inputIcon: { marginRight: Spacing.sm },
   input: { flex: 1, paddingVertical: 14, fontSize: FontSize.md, color: Colors.text },
   hint: { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: 4 },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  chip: {
-    borderRadius: Radius.full,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 6,
-  },
-  chipSelected: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  chipText: { fontSize: FontSize.sm, color: Colors.textSecondary, fontWeight: '600' },
-  chipTextSelected: { color: '#fff' },
   textArea: {
     borderWidth: 1.5,
     borderColor: Colors.border,

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList, Discipline } from '../../types';
 import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
@@ -31,8 +32,12 @@ const DISCIPLINES: { key: Discipline; label: string }[] = [
   { key: 'line_training', label: 'Line Training' },
 ];
 
-function toDateInputValue(d: Date) {
+function toDateString(d: Date) {
   return d.toISOString().split('T')[0];
+}
+
+function formatDisplayDate(d: Date) {
+  return d.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 export default function DiveRequestFormScreen({ navigation, route }: Props) {
@@ -42,7 +47,8 @@ export default function DiveRequestFormScreen({ navigation, route }: Props) {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  const [requestedDate, setRequestedDate] = useState(toDateInputValue(tomorrow));
+  const [selectedDate, setSelectedDate] = useState<Date>(tomorrow);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [locationName, setLocationName] = useState('');
   const [disciplines, setDisciplines] = useState<Discipline[]>([]);
   const [notes, setNotes] = useState('');
@@ -56,23 +62,17 @@ export default function DiveRequestFormScreen({ navigation, route }: Props) {
     );
   };
 
-  // Simple date input: YYYY-MM-DD
-  const handleDateChange = (text: string) => {
-    // allow typing freely, validate on submit
-    setRequestedDate(text);
+  const onDateChange = (_: any, date?: Date) => {
+    if (Platform.OS === 'android') setShowDatePicker(false);
+    if (date) setSelectedDate(date);
   };
 
   const handleSend = async () => {
     if (!profile) return;
 
-    if (!requestedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      showModal({ type: 'error', title: 'Invalid Date', message: 'Please enter date as YYYY-MM-DD.' });
-      return;
-    }
-    const dateObj = new Date(requestedDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    if (isNaN(dateObj.getTime()) || dateObj < today) {
+    if (selectedDate < today) {
       showModal({ type: 'error', title: 'Invalid Date', message: 'Please select a future date.' });
       return;
     }
@@ -85,7 +85,7 @@ export default function DiveRequestFormScreen({ navigation, route }: Props) {
     const { error } = await supabase.from('dive_requests').insert({
       requester_id: profile.id,
       buddy_id: buddyId,
-      requested_date: requestedDate,
+      requested_date: toDateString(selectedDate),
       location_name: locationName.trim(),
       disciplines,
       notes: notes.trim() || null,
@@ -126,17 +126,31 @@ export default function DiveRequestFormScreen({ navigation, route }: Props) {
 
           {/* Date */}
           <Text style={styles.label}>Dive Date *</Text>
-          <View style={styles.inputWrap}>
+          <TouchableOpacity
+            style={styles.inputWrap}
+            onPress={() => setShowDatePicker(true)}
+            activeOpacity={0.8}
+          >
             <Ionicons name="calendar-outline" size={18} color={Colors.textMuted} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              value={requestedDate}
-              onChangeText={handleDateChange}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor={Colors.textMuted}
-              keyboardType="numbers-and-punctuation"
+            <Text style={[styles.input, { color: Colors.text, paddingVertical: 14 }]}>
+              {formatDisplayDate(selectedDate)}
+            </Text>
+            <Ionicons name="chevron-down" size={16} color={Colors.textMuted} />
+          </TouchableOpacity>
+          {showDatePicker && (
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              minimumDate={new Date()}
+              onChange={onDateChange}
             />
-          </View>
+          )}
+          {Platform.OS === 'ios' && showDatePicker && (
+            <TouchableOpacity onPress={() => setShowDatePicker(false)} style={styles.pickerDone}>
+              <Text style={styles.pickerDoneText}>Done</Text>
+            </TouchableOpacity>
+          )}
 
           {/* Location */}
           <Text style={[styles.label, { marginTop: Spacing.md }]}>Dive Location *</Text>
@@ -300,4 +314,6 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6, shadowOpacity: 0 },
   buttonText: { color: '#fff', fontSize: FontSize.md, fontWeight: '700' },
+  pickerDone: { alignItems: 'flex-end', paddingHorizontal: Spacing.md, paddingBottom: Spacing.sm },
+  pickerDoneText: { color: Colors.primary, fontWeight: '700', fontSize: FontSize.md },
 });

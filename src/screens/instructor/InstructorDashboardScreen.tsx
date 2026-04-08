@@ -15,7 +15,6 @@ import { RootStackParamList } from '../../types';
 import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
-import { isDemoMode, getDemoRecentMessages, DEMO_INSTRUCTOR_BOOKINGS } from '../../lib/mockData'; // DEMO MODE
 import { Profile } from '../../types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -36,15 +35,6 @@ export default function InstructorDashboardScreen() {
 
   const fetchRecentMessages = async () => {
     if (!profile) return;
-
-    // DEMO MODE — skip Supabase when using demo account
-    if (isDemoMode(profile.id)) {
-      setRecentMessages(getDemoRecentMessages(profile.id));
-      setBookings(DEMO_INSTRUCTOR_BOOKINGS);
-      setLoading(false);
-      return;
-    }
-    // END DEMO MODE
 
     const [msgResult, bookingResult] = await Promise.all([
       supabase
@@ -76,10 +66,6 @@ export default function InstructorDashboardScreen() {
 
   const toggleAvailability = async () => {
     if (!profile) return;
-    if (isDemoMode(profile.id)) {
-      setProfile({ ...profile, available_to_dive: !profile.available_to_dive });
-      return;
-    }
     setTogglingAvailability(true);
     const newVal = !profile.available_to_dive;
     const { data: updated } = await supabase

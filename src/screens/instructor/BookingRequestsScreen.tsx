@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,8 +15,6 @@ import { RootStackParamList, BookingStatus } from '../../types';
 import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
-import { isDemoMode, DEMO_INSTRUCTOR_BOOKINGS } from '../../lib/mockData'; // DEMO MODE
-
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 const TABS: { key: BookingStatus | 'pending'; label: string }[] = [
@@ -46,18 +44,24 @@ export default function BookingRequestsScreen() {
     }, [activeTab])
   );
 
+  // Real-time: refresh when a booking is created or its status changes
+  useEffect(() => {
+    if (!profile) return;
+    const channel = supabase
+      .channel('bookings-list')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'buddyline',
+        table: 'bookings',
+        filter: `instructor_id=eq.${profile.id}`,
+      }, () => fetchBookings())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [profile?.id, activeTab]);
+
   const fetchBookings = async () => {
     if (!profile) return;
     setLoading(true);
-
-    // DEMO MODE
-    if (isDemoMode(profile.id)) {
-      const filtered = (DEMO_INSTRUCTOR_BOOKINGS as any[]).filter((b) => b.status === activeTab);
-      setBookings(filtered);
-      setLoading(false);
-      return;
-    }
-    // END DEMO MODE
 
     const { data } = await supabase
       .from('bookings')

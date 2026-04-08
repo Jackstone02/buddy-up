@@ -16,7 +16,6 @@ import { RootStackParamList, Discipline } from '../../types';
 import { Colors, FontSize, Spacing, Radius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
-import { isDemoMode, DEMO_BUDDIES } from '../../lib/mockData'; // DEMO MODE
 import { haversineKm, getCurrentCoords, DISTANCE_OPTIONS, DistanceFilter } from '../../lib/location';
 import UserAvatar from '../../components/UserAvatar';
 
@@ -46,28 +45,6 @@ export default function FindBuddyScreen() {
   const fetchBuddies = async () => {
     if (!profile) return;
     setLoading(true);
-
-    // DEMO MODE — skip Supabase when using demo account
-    if (isDemoMode(profile.id)) {
-      let filtered = (DEMO_BUDDIES as any[]).filter((b) => b.id !== profile.id);
-      if (availableOnly) filtered = filtered.filter((b) => b.available_to_dive);
-      if (search.trim()) {
-        const q = search.trim().toLowerCase();
-        filtered = filtered.filter((b) => b.city_region.toLowerCase().includes(q));
-      }
-      if (certFilter !== 'All') filtered = filtered.filter((b) => b.certified?.cert_level === certFilter);
-      if (disciplineFilter) filtered = filtered.filter((b) => (b.certified?.disciplines || []).includes(disciplineFilter));
-      if (distanceFilter !== 'any' && userCoords) {
-        filtered = filtered.filter((b) =>
-          b.latitude != null && b.longitude != null &&
-          haversineKm(userCoords.latitude, userCoords.longitude, b.latitude, b.longitude) <= distanceFilter
-        );
-      }
-      setBuddies(filtered);
-      setLoading(false);
-      return;
-    }
-    // END DEMO MODE
 
     let query = supabase
       .from('profiles')
