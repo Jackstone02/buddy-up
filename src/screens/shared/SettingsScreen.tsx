@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +18,29 @@ const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
 const SAFETY_KEY = '@buddyline:safetyAccepted';
+
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+
+function PushTokenDebug() {
+  const [status, setStatus] = useState('checking...');
+  useEffect(() => {
+    (async () => {
+      if (!Device.isDevice) { setStatus('not a physical device'); return; }
+      const { status: perm } = await Notifications.getPermissionsAsync();
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+      if (perm !== 'granted') { setStatus(`permission: ${perm}`); return; }
+      if (!projectId) { setStatus('no projectId'); return; }
+      try {
+        const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
+        setStatus(token ? `token: ${token.slice(0, 40)}...` : 'token: null');
+      } catch (e: any) {
+        setStatus(`error: ${e?.message}`);
+      }
+    })();
+  }, []);
+  return <Text style={{ fontSize: 10, color: '#999', textAlign: 'center', marginTop: 4, paddingHorizontal: 16 }}>{status}</Text>;
+}
 
 export default function SettingsScreen({ navigation }: Props) {
   const { profile, clearAuth, setSafetyAccepted } = useAuthStore();
@@ -190,6 +213,7 @@ export default function SettingsScreen({ navigation }: Props) {
         </Text>
 
         <Text style={styles.version}>Version {APP_VERSION}</Text>
+        <PushTokenDebug />
       </ScrollView>
 
       <AppModal

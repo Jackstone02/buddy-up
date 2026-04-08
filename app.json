@@ -37,6 +37,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "com.buddyline.app",
+      "googleServicesFile": "./google-services.json",
       "predictiveBackGestureEnabled": false,
       "config": {
         "googleMaps": {

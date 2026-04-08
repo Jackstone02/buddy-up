@@ -70,7 +70,6 @@ export async function registerPushToken(userId: string): Promise<void> {
     console.log('[Push Token] Saving token for device:', deviceId);
 
     const { error } = await supabase
-      .schema('buddyline')
       .from('push_tokens')
       .upsert(
         {
@@ -84,9 +83,9 @@ export async function registerPushToken(userId: string): Promise<void> {
       );
 
     if (error) {
-      console.error('[Push Token] Error saving:', error);
+      console.error('[Push Token] Error saving:', JSON.stringify(error));
     } else {
-      console.log('[Push Token] ✅ Saved successfully');
+      console.log('[Push Token] ✅ Saved successfully:', token.slice(0, 30) + '...');
     }
   } catch (error) {
     console.error('[Push Token] Registration failed:', error);

@@ -22,6 +22,7 @@ import { signInWithGoogle } from '../../lib/googleAuth';
 import { useAuthStore } from '../../store/authStore';
 import AppModal from '../../components/AppModal';
 import { useAppModal } from '../../hooks/useAppModal';
+import { registerPushToken } from '../../lib/notifications';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SignIn'>;
 
@@ -50,6 +51,7 @@ export default function SignInScreen({ navigation }: Props) {
     }
 
     setProfile(profile);
+    registerPushToken(profile.id);
 
     // Incomplete onboarding — send back to finish it
     if (!profile.age_confirmed) {
